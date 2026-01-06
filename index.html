@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>麻將大師群</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+            font-size: 0.95rem; 
+            background-color: #FAF3E1; /* 色調 1 */
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #F5E7C6; border-radius: 10px; }
+        
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        select { appearance: none; text-align: center; }
+        
+        button, input, select, p, span, label {
+            font-size: 0.95rem; 
+        }
+        
+        .title-main { font-size: 1.5rem !important; }
+        .tai-input-large { font-size: 2.25rem !important; }
+        .stat-label { font-size: 0.75rem !important; }
+
+        /* 顏色定義 */
+        .text-orange { color: #FF6D1F; } /* 強調色 3 */
+        .bg-orange { background-color: #FF6D1F; }
+        .text-dark { color: #222222; } /* 質感黑 4 */
+        .bg-dark { background-color: #222222; }
+        .border-beige { border-color: #F5E7C6; } /* 暖沙色 2 */
+        .bg-beige { background-color: #F5E7C6; }
+        
+        .card-shadow { box-shadow: 0 4px 12px rgba(34, 34, 34, 0.05); }
+    </style>
+</head>
+<body class="min-h-screen p-2 md:p-6 text-[#222222] pb-24">
+
+    <div class="max-w-4xl mx-auto space-y-4">
+        <!-- Header -->
+        <div class="bg-[#222222] p-5 rounded-2xl text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2 rounded-xl border border-white/10">
+                    <i data-lucide="trophy" class="w-6 h-6 text-[#FF6D1F]"></i>
+                </div>
+                <h1 class="font-black tracking-tight title-main text-white">麻將大師群</h1>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="exportToCsv()" class="bg-[#FF6D1F] hover:opacity-90 px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-bold text-xs text-white shadow-sm">
+                    <i data-lucide="download" class="w-4 h-4 text-white"></i> 匯出 CSV
+                </button>
+                <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all text-white">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Global Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-white p-3 rounded-xl border-2 border-[#F5E7C6] text-center card-shadow">
+                <label class="stat-label font-black text-slate-400 uppercase block mb-1">日期</label>
+                <input type="date" id="session-date" class="w-full font-bold text-[#222222] outline-none bg-transparent text-center text-sm">
+            </div>
+            <div class="bg-white p-3 rounded-xl border-2 border-[#F5E7C6] text-center font-mono card-shadow">
+                <label class="stat-label font-black text-slate-400 uppercase block mb-1">累積將數</label>
+                <p id="total-rounds" class="text-xl font-black text-[#222222] leading-none">0</p>
+            </div>
+            <div class="bg-white p-3 rounded-xl border-2 border-[#F5E7C6] text-center font-mono card-shadow">
+                <label class="stat-label font-black text-slate-400 uppercase block mb-1">東錢歸屬（小為）</label>
+                <p id="total-dong" class="text-xl font-black text-[#FF6D1F] leading-none">$0</p>
+            </div>
+            <div class="bg-[#F5E7C6] p-3 rounded-xl text-center text-[#222222] font-mono card-shadow border border-[#FAF3E1]">
+                <label class="stat-label font-black opacity-60 uppercase block mb-1">設定</label>
+                <p class="text-lg font-black tracking-widest leading-none">50 / 20</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 space-y-6">
+                <!-- 1. Player Selection -->
+                <div class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] card-shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-[#FF6D1F]"></i> 1. 上場玩家 (點選4人)
+                        </h2>
+                        <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic">對局中名單已鎖定</span>
+                    </div>
+                    <div id="player-selection-grid" class="grid grid-cols-5 gap-2"></div>
+                </div>
+
+                <!-- 2. Record a Hand -->
+                <div class="bg-white p-6 rounded-2xl border-2 border-[#F5E7C6] card-shadow relative overflow-hidden">
+                    <h2 class="text-sm font-black text-[#222222] uppercase mb-4 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-[#FF6D1F]"></i> 2. 當下胡牌紀錄
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-[#FAF3E1] rounded-xl border border-[#F5E7C6] shadow-inner">
+                            <label class="text-[11px] font-black text-[#222222]/60 block mb-3 text-center uppercase tracking-widest italic font-bold">👑 本局莊家 (東南西北)</label>
+                            <div id="dealer-selection-container" class="grid grid-cols-4 gap-2 mb-4"></div>
+                            
+                            <div id="dealer-consecutive-container" class="hidden space-y-4 transition-all">
+                                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-[#F5E7C6] shadow-sm">
+                                    <span class="font-bold text-[#222222] text-xs">莊家連莊數：</span>
+                                    <input type="number" id="consecutive-input" value="0" min="0" max="20" onchange="updateConsecutiveWins(this.value)" class="w-16 bg-slate-50 border-none rounded text-lg font-black text-center py-1 outline-none focus:ring-2 focus:ring-[#FF6D1F] font-mono text-[#FF6D1F]">
+                                </div>
+                                <div class="bg-white p-3 rounded-xl border border-[#F5E7C6] shadow-sm">
+                                    <div class="flex items-center gap-1.5 mb-2 text-[#222222]">
+                                        <i data-lucide="eye" class="w-4 h-4 text-[#FF6D1F]"></i>
+                                        <span class="font-bold text-xs">本局眼牌名單：</span>
+                                    </div>
+                                    <div id="eye-watcher-grid" class="grid grid-cols-4 gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-black text-[#FF6D1F] text-center block uppercase font-bold">胡牌</label>
+                                <select id="winner-select" onchange="handleInputChange()" class="w-full bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl p-3 font-black text-[#222222] outline-none focus:ring-2 focus:ring-[#FF6D1F] text-base shadow-sm h-12"></select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-black text-[#222222]/60 text-center block uppercase font-bold">放槍</label>
+                                <select id="loser-select" onchange="handleInputChange()" class="w-full bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl p-3 font-black text-[#222222] outline-none focus:ring-2 focus:ring-[#FF6D1F] text-base shadow-sm h-12"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex items-end gap-3">
+                        <div class="flex-1 space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 block text-center italic">起跳台數 (莊/摸保底1台)</label>
+                            <input type="number" id="tai-input" placeholder="0" min="0" oninput="this.value = Math.abs(this.value)" class="w-full bg-slate-50 border border-[#F5E7C6] rounded-xl p-4 font-mono font-black tai-input-large text-center outline-none focus:ring-2 focus:ring-[#FF6D1F] shadow-inner text-[#222222]">
+                        </div>
+                        <div class="flex gap-1.5 pb-1">
+                            <button id="btn-dice" onclick="toggleModifier('dice')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-400 shadow-sm" title="骰規 +2台"><i data-lucide="dices" class="w-6 h-6"></i></button>
+                            <button id="btn-leopard" onclick="toggleModifier('leopard')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-400 shadow-sm" title="豹子 x2"><i data-lucide="zap" class="w-6 h-6"></i></button>
+                        </div>
+                    </div>
+
+                    <button onclick="addHand()" class="w-full mt-8 bg-[#FF6D1F] hover:opacity-90 text-white py-4 rounded-xl font-black btn-record flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all text-white border-b-4 border-[#222222]/20">
+                        <i data-lucide="save" class="w-5 h-5 text-white"></i> 記錄這筆
+                    </button>
+                </div>
+
+                <!-- 3. Current Progress -->
+                <div class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] card-shadow">
+                    <h2 class="text-sm font-black text-[#222222] uppercase mb-4 flex items-center gap-2 font-bold">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#FF6D1F]"></i> 3. 即時計分
+                    </h2>
+                    <div id="current-summary-grid" class="grid grid-cols-4 gap-2 mb-6"></div>
+                    <div id="hands-list" class="space-y-2 max-h-[500px] overflow-y-auto mb-6 pr-1 custom-scrollbar"></div>
+
+                    <div class="pt-6 border-t border-[#F5E7C6] space-y-4">
+                        <div class="flex items-center justify-between bg-[#F5E7C6] p-4 rounded-xl border border-[#FAF3E1]">
+                            <span class="text-sm font-black text-[#222222] flex items-center gap-2">
+                                <i data-lucide="coins" class="w-5 h-5 text-[#FF6D1F]"></i>本將東錢累計
+                            </span>
+                            <div class="text-[#222222] font-black text-2xl font-mono" id="round-dong-display">$0</div>
+                        </div>
+                        <button onclick="finalizeRound()" class="w-full bg-[#222222] hover:bg-black text-white py-4 rounded-xl font-black btn-record flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-all border-b-4 border-black">
+                            <i data-lucide="check-square" class="w-5 h-5 text-[#FF6D1F]"></i> 結束本將
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Panel -->
+            <div class="lg:col-span-5 space-y-4">
+                <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2 text-black">
+                    <i data-lucide="history" class="w-4 h-4 text-[#FF6D1F]"></i> 歷史紀錄
+                </h2>
+                <div id="history-list" class="space-y-4 max-h-[1400px] overflow-y-auto pr-1 pb-4 custom-scrollbar"></div>
+                
+                <div id="settlement-container" class="space-y-4 hidden">
+                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95">
+                        <i data-lucide="wallet" class="w-5 h-5 text-white"></i> 當日統一結帳
+                    </button>
+                    <div id="settlement-result" class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] shadow-lg space-y-4 transition-all">
+                        <div class="flex items-center justify-between border-b border-[#FAF3E1] pb-2">
+                            <span class="text-xs font-black text-[#FF6D1F] uppercase tracking-widest">建議匯款方案</span>
+                            <span id="settle-date-label" class="text-[10px] font-bold text-slate-400"></span>
+                        </div>
+                        <div id="settle-balances-list" class="grid grid-cols-5 gap-1 border-b border-[#FAF3E1] pb-3"></div>
+                        <div id="settle-instructions" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FIXED_PLAYERS = [
+            { id: 1, name: '阿茂' }, { id: 2, name: '小為' }, { id: 3, name: '阿仁' },
+            { id: 4, name: '榮緯' }, { id: 5, name: 'Karl' }
+        ];
+        const BASE_MONEY = 50;
+        const TAI_MONEY = 20;
+        const DONG_FEE = 20;
+        const SEATS = ["東位", "南位", "西位", "北位"];
+
+        let state = {
+            sessionDate: new Date().toISOString().split('T')[0],
+            selectedPlayerIds: [1, 2, 3, 4],
+            consecutiveWins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            eyeWatchers: [],
+            rounds: 0,
+            totalDong: 0,
+            totalScores: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            roundHands: [],
+            history: [],
+            newHand: { dealerId: null, isDiceReturn: false, isLeopard: false }
+        };
+
+        window.onload = () => {
+            document.getElementById('session-date').value = state.sessionDate;
+            renderAll();
+        };
+
+        function togglePlayer(id) {
+            if (state.roundHands.length > 0) return;
+            if (state.selectedPlayerIds.includes(id)) {
+                state.selectedPlayerIds = state.selectedPlayerIds.filter(pid => pid !== id);
+            } else if (state.selectedPlayerIds.length < 4) {
+                state.selectedPlayerIds.push(id);
+            }
+            renderAll();
+        }
+
+        function toggleEyeWatcher(id) {
+            if (state.eyeWatchers.includes(id)) {
+                state.eyeWatchers = state.eyeWatchers.filter(pid => pid !== id);
+            } else {
+                state.eyeWatchers.push(id);
+            }
+            renderEyeWatcherUI();
+        }
+
+        function getDealerJumpTai(n) {
+            return n === 0 ? 1 : (2 * n) + 1;
+        }
+
+        function handleInputChange() {
+            const winnerId = parseInt(document.getElementById('winner-select').value);
+            const loserVal = document.getElementById('loser-select').value;
+            const dealerId = state.newHand.dealerId;
+            const input = document.getElementById('tai-input');
+            
+            if (winnerId === dealerId || (loserVal !== 'all' && parseInt(loserVal) === dealerId)) {
+                input.value = getDealerJumpTai(state.consecutiveWins[dealerId] || 0);
+            } else if (loserVal === 'all') {
+                input.value = 1; 
+            } else {
+                input.value = 0; 
+            }
+            renderOptions(); 
+        }
+
+        function updateConsecutiveWins(val) {
+            if (state.newHand.dealerId) {
+                let num = parseInt(val) || 0;
+                if (num < 0) num = 0; if (num > 20) num = 20;
+                state.consecutiveWins[state.newHand.dealerId] = num;
+                handleInputChange();
+            }
+        }
+
+        function setDealer(id) { 
+            state.newHand.dealerId = id; 
+            document.getElementById('dealer-consecutive-container').classList.remove('hidden');
+            const n = state.consecutiveWins[id] || 0;
+            document.getElementById('consecutive-input').value = n;
+            handleInputChange();
+            renderAll(); 
+        }
+
+        function toggleModifier(type) {
+            if (type === 'dice') { state.newHand.isDiceReturn = !state.newHand.isDiceReturn; state.newHand.isLeopard = false; }
+            else { state.newHand.isLeopard = !state.newHand.isLeopard; state.newHand.isDiceReturn = false; }
+            updateModifierUI();
+        }
+
+        function addHand() {
+            const winnerId = parseInt(document.getElementById('winner-select').value);
+            const loserVal = document.getElementById('loser-select').value;
+            const loserId = loserVal === 'all' ? 'all' : parseInt(loserVal);
+            let taiInput = parseInt(document.getElementById('tai-input').value);
+            const dealerId = state.newHand.dealerId;
+
+            if (!winnerId || !loserId || isNaN(taiInput) || !dealerId) {
+                alert("請選取贏家與輸家！"); return;
+            }
+
+            if (winnerId === dealerId || loserId === 'all') {
+                if (taiInput < 1) taiInput = 1;
+            }
+
+            const currentN = state.consecutiveWins[dealerId] || 0;
+            const dealerBonusTai = getDealerJumpTai(currentN); 
+            const impacts = {};
+            state.selectedPlayerIds.forEach(id => impacts[id] = 0);
+            let dongAdded = 0;
+
+            const baseTai = Math.abs(taiInput);
+            const diceTai = state.newHand.isDiceReturn ? 2 : 0;
+            const isWinnerEye = state.eyeWatchers.includes(winnerId);
+
+            if (loserId === 'all') {
+                dongAdded = DONG_FEE;
+                let winnerTotalGain = 0;
+                state.selectedPlayerIds.forEach(pid => {
+                    if (pid === winnerId) return;
+                    let pTai = baseTai + diceTai;
+                    if (winnerId !== dealerId && pid === dealerId) {
+                        pTai += dealerBonusTai;
+                    }
+                    if (isWinnerEye) pTai += 1;
+                    if (state.eyeWatchers.includes(pid)) pTai += 1;
+
+                    let money = 50 + (pTai * TAI_MONEY);
+                    if (state.newHand.isLeopard) money *= 2;
+                    impacts[pid] = -money; winnerTotalGain += money;
+                });
+                impacts[winnerId] = winnerTotalGain - DONG_FEE;
+            } else {
+                let pTai = baseTai + diceTai;
+                if (isWinnerEye) pTai += 1;
+                if (winnerId !== dealerId && loserId === dealerId) {
+                    pTai += dealerBonusTai;
+                }
+
+                let baseMoney = 50 + (pTai * TAI_MONEY);
+                if (state.newHand.isLeopard) baseMoney *= 2;
+                impacts[winnerId] = baseMoney; impacts[loserId] = -baseMoney;
+
+                state.selectedPlayerIds.forEach(pid => {
+                    if (pid === winnerId || pid === loserId) return;
+                    if (state.eyeWatchers.includes(pid)) {
+                        const eyeCost = 1 * TAI_MONEY;
+                        impacts[pid] -= eyeCost; impacts[winnerId] += eyeCost;
+                    }
+                });
+            }
+
+            state.roundHands.unshift({ 
+                id: Date.now(), winnerId, loserId, tai: taiInput, dealerId, 
+                consecutiveWins: currentN, eyeWatchers: [...state.eyeWatchers],
+                isDiceReturn: state.newHand.isDiceReturn, isLeopard: state.newHand.isLeopard, impacts, dong: dongAdded 
+            });
+            
+            if (winnerId === dealerId) { 
+                state.consecutiveWins[dealerId]++; 
+            } else { 
+                state.consecutiveWins[dealerId] = 0;
+                const nextIdx = (state.selectedPlayerIds.indexOf(dealerId) + 1) % 4;
+                state.newHand.dealerId = state.selectedPlayerIds[nextIdx];
+            }
+
+            document.getElementById('winner-select').value = "";
+            document.getElementById('loser-select').value = "";
+            state.eyeWatchers = []; 
+            const nextDealerId = state.newHand.dealerId;
+            document.getElementById('consecutive-input').value = state.consecutiveWins[nextDealerId] || 0;
+            handleInputChange();
+            state.newHand.isDiceReturn = false; state.newHand.isLeopard = false;
+            renderAll();
+        }
+
+        function deleteHand(id) { state.roundHands = state.roundHands.filter(h => h.id !== id); renderAll(); }
+
+        function finalizeRound() {
+            if (state.roundHands.length === 0) return;
+            if (!confirm("確定結束本將紀錄？數據將存入歷史。")) return;
+            const summary = getRoundSummary();
+            const date = document.getElementById('session-date').value;
+            state.selectedPlayerIds.forEach(pid => state.totalScores[pid] += summary.scores[pid]);
+            state.history.unshift({ 
+                id: Date.now(), date, roundNumber: state.rounds + 1, players: [...state.selectedPlayerIds], 
+                scores: { ...summary.scores }, stats: { ...summary.stats }, dong: summary.dongTotal, details: [...state.roundHands] 
+            });
+            state.rounds += 1; state.totalDong += summary.dongTotal; state.roundHands = []; state.newHand.dealerId = null;
+            document.getElementById('dealer-consecutive-container').classList.add('hidden');
+            renderAll();
+        }
+
+        function getRoundSummary() {
+            const scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            const stats = { wins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, selfDraws: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, losses: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+            let dongTotal = 0;
+            state.roundHands.forEach(h => {
+                Object.keys(h.impacts).forEach(pid => scores[pid] += h.impacts[pid]);
+                dongTotal += h.dong;
+                if (h.loserId === 'all') stats.selfDraws[h.winnerId]++;
+                else { stats.wins[h.winnerId]++; stats.losses[h.loserId]++; }
+            });
+            return { scores, stats, dongTotal };
+        }
+
+        function calculateSettlement() {
+            const date = document.getElementById('session-date').value;
+            const todayRecords = state.history.filter(r => r.date === date);
+            if (todayRecords.length === 0) { alert("今天尚未有歷史紀錄！"); return; }
+            
+            const netBalances = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            const dailyStats = { wins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, selfDraws: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, losses: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+            let totalDongForDay = 0;
+
+            todayRecords.forEach(r => {
+                Object.keys(r.scores).forEach(pid => {
+                    netBalances[pid] += r.scores[pid];
+                    dailyStats.wins[pid] += r.stats.wins[pid];
+                    dailyStats.selfDraws[pid] += r.stats.selfDraws[pid];
+                    dailyStats.losses[pid] += r.stats.losses[pid];
+                });
+                totalDongForDay += r.dong;
+            });
+            netBalances[2] += totalDongForDay; // 東錢歸小為 (ID: 2)
+
+            document.getElementById('settle-date-label').textContent = `${date} 結帳摘要`;
+            document.getElementById('settle-balances-list').innerHTML = FIXED_PLAYERS.map(p => {
+                const bal = netBalances[p.id];
+                return `
+                <div class="text-center">
+                    <p class="text-[10px] font-black text-[#222222] mb-0.5">${p.name}</p>
+                    <p class="text-[11px] font-black ${bal >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${bal > 0 ? '+' : ''}${bal}</p>
+                    <div class="flex flex-col text-[8px] font-bold opacity-60 mt-1">
+                        <span>胡：${dailyStats.wins[p.id]}</span>
+                        <span>摸：${dailyStats.selfDraws[p.id]}</span>
+                        <span>槍：${dailyStats.losses[p.id]}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const debtors = [];
+            const creditors = [];
+            Object.keys(netBalances).forEach(pid => {
+                const val = netBalances[pid];
+                if (val < 0) debtors.push({ name: FIXED_PLAYERS.find(p => p.id == pid).name, amount: Math.abs(val) });
+                else if (val > 0) creditors.push({ name: FIXED_PLAYERS.find(p => p.id == pid).name, amount: val });
+            });
+
+            const instructions = [];
+            let dIdx = 0, cIdx = 0;
+            while (dIdx < debtors.length && cIdx < creditors.length) {
+                const d = debtors[dIdx], c = creditors[cIdx];
+                const settleAmount = Math.min(d.amount, c.amount);
+                if (settleAmount > 0) instructions.push(`<div class="flex items-center justify-between bg-[#FAF3E1] p-3 rounded-lg border border-[#F5E7C6]"><span class="font-bold text-[#222222]">${d.name} 👉 <span class="text-[#FF6D1F] font-black">${c.name}</span></span><span class="font-mono font-black text-[#222222]">$${settleAmount}</span></div>`);
+                d.amount -= settleAmount; c.amount -= settleAmount;
+                if (d.amount === 0) dIdx++;
+                if (c.amount === 0) cIdx++;
+            }
+            document.getElementById('settle-instructions').innerHTML = instructions.length ? instructions.join('') : '<p class="text-center text-xs text-slate-300 italic">帳目平衡</p>';
+            lucide.createIcons();
+        }
+
+        function exportToCsv() {
+            if (state.history.length === 0) return;
+            let csv = "\ufeff日期,將數,東錢,玩家,得分,胡,摸,槍\n";
+            state.history.forEach(r => r.players.forEach(pid => {
+                csv += `${r.date},第${r.roundNumber}將,${r.dong},${FIXED_PLAYERS.find(x => x.id === pid).name},${r.scores[pid]},${r.stats.wins[pid]},${r.stats.selfDraws[pid]},${r.stats.losses[pid]}\n`;
+            }));
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = `戰績錄_${state.sessionDate}.csv`; link.click();
+        }
+
+        function resetData() { if (confirm('確定重置所有數據？')) location.reload(); }
+
+        function renderAll() {
+            renderStats(); renderPlayers(); renderDealer(); renderOptions(); renderSummary(); renderHands(); renderHistoryList(); renderEyeWatcherUI(); updateModifierUI();
+            document.getElementById('settlement-container').classList.toggle('hidden', state.history.length === 0);
+            lucide.createIcons();
+        }
+
+        function renderStats() {
+            document.getElementById('total-rounds').textContent = state.rounds;
+            document.getElementById('total-dong').textContent = `$${state.totalDong}`;
+            const summary = getRoundSummary();
+            document.getElementById('round-dong-display').textContent = `$${summary.dongTotal}`;
+            state.roundHands.length > 0 ? document.getElementById('player-status-msg').classList.remove('hidden') : document.getElementById('player-status-msg').classList.add('hidden');
+        }
+
+        function renderPlayers() {
+            document.getElementById('player-selection-grid').innerHTML = FIXED_PLAYERS.map(p => {
+                const sel = state.selectedPlayerIds.includes(p.id);
+                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold transition-all border-2 flex flex-col items-center justify-center ${sel ? 'bg-[#FF6D1F] border-transparent text-white shadow-md' : 'bg-white border-[#F5E7C6] text-slate-300'}"><span class="text-sm font-bold text-center">${p.name}</span></button>`;
+            }).join('');
+        }
+
+        function renderDealer() {
+            document.getElementById('dealer-selection-container').innerHTML = state.selectedPlayerIds.map((pid, idx) => {
+                const act = state.newHand.dealerId === pid;
+                return `<div class="flex flex-col gap-1 text-slate-400"><span class="stat-label font-bold text-center">${SEATS[idx]}</span><button onclick="setDealer(${pid})" class="py-3.5 rounded-xl font-bold border-2 transition-all ${act ? 'bg-[#222222] border-[#222222] text-white shadow-md' : 'bg-white border-[#F5E7C6] text-slate-400'} text-base font-bold">${FIXED_PLAYERS.find(x => x.id === pid).name}</button></div>`;
+            }).join('');
+        }
+
+        function renderEyeWatcherUI() {
+            const grid = document.getElementById('eye-watcher-grid'); if (!grid) return;
+            grid.innerHTML = state.selectedPlayerIds.map(pid => {
+                const act = state.eyeWatchers.includes(pid);
+                return `<button onclick="toggleEyeWatcher(${pid})" class="py-2.5 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1 ${act ? 'bg-[#FF6D1F] border-transparent text-white shadow-sm' : 'bg-white border-[#F5E7C6] text-slate-200'}"><i data-lucide="eye" class="w-3 h-3 ${act ? 'text-white' : 'text-slate-100'}"></i>${FIXED_PLAYERS.find(x => x.id === pid).name}</button>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderOptions() {
+            const winS = document.getElementById('winner-select'); const losS = document.getElementById('loser-select');
+            const selPs = FIXED_PLAYERS.filter(p => state.selectedPlayerIds.includes(p.id));
+            const curWin = parseInt(winS.value); const curLos = losS.value;
+            winS.innerHTML = `<option value=""> </option>` + selPs.map(p => `<option value="${p.id}" ${curWin === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
+            losS.innerHTML = `<option value=""> </option><option value="all" ${curLos === 'all' ? 'selected' : ''}>🌟 自摸</option>` + selPs.filter(p => p.id !== parseInt(winS.value)).map(p => `<option value="${p.id}" ${losS.value == p.id ? 'selected' : ''}>${p.name}</option>`).join('');
+        }
+
+        function renderSummary() {
+            const summary = getRoundSummary();
+            document.getElementById('current-summary-grid').innerHTML = state.selectedPlayerIds.map(pid => {
+                const p = FIXED_PLAYERS.find(x => x.id === pid);
+                const score = summary.scores[pid];
+                return `
+                <div class="text-center p-3.5 bg-white rounded-2xl border-2 border-[#F5E7C6] shadow flex flex-col items-center">
+                    <p class="text-base font-black text-[#222222] mb-1">${p.name}</p>
+                    <p class="text-xl font-black ${score >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${score > 0 ? '+' : ''}${score}</p>
+                    <div class="flex flex-col gap-0.5 mt-2 w-full text-[11px] font-bold">
+                        <span class="bg-[#FF6D1F]/5 text-[#FF6D1F] py-0.5 rounded w-full border border-[#FF6D1F]/10">胡：${summary.stats.wins[pid]}</span>
+                        <span class="bg-[#222222]/5 text-[#222222] py-0.5 rounded w-full border border-[#222222]/10">摸：${summary.stats.selfDraws[pid]}</span>
+                        <span class="bg-[#222222]/5 text-[#222222] py-0.5 rounded w-full border border-[#222222]/10 opacity-40">槍：${summary.stats.losses[pid]}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderHands() {
+            const list = document.getElementById('hands-list');
+            if (state.roundHands.length === 0) { list.innerHTML = `<p class="text-center py-6 text-slate-300 italic text-sm">尚未有小局紀錄...</p>`; return; }
+            list.innerHTML = state.roundHands.map(h => {
+                const eyeNames = h.eyeWatchers.map(id => FIXED_PLAYERS.find(x => x.id === id).name).join(', ');
+                return `
+                <div class="flex flex-col p-4 bg-white rounded-xl border border-[#F5E7C6] group shadow-sm transition-all">
+                    <div class="flex items-center justify-between">
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-[#222222] text-white px-2 py-0.5 rounded text-[9px] font-bold">莊：${FIXED_PLAYERS.find(x => x.id === h.dealerId).name}(${h.consecutiveWins})</span>
+                                <span class="font-black text-[#FF6D1F] text-sm">${FIXED_PLAYERS.find(x => x.id === h.winnerId).name}</span>
+                            </div>
+                            <div class="mt-1">
+                                <span class="text-slate-500 text-xs font-bold">${h.loserId === 'all' ? '自摸' : '胡' + FIXED_PLAYERS.find(x => x.id === h.loserId).name} ${h.tai}台</span>
+                                ${h.isDiceReturn ? '<span class="text-[#FF6D1F] font-bold bg-[#FF6D1F]/10 px-1 rounded ml-1 text-[10px]">骰規</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-black text-base ${h.impacts[h.winnerId] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${h.impacts[h.winnerId] > 0 ? '+' : ''}${h.impacts[h.winnerId]}</span>
+                            <button onclick="deleteHand(${h.id})" class="text-slate-300 p-1 hover:text-[#222222] transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    ${h.eyeWatchers.length > 0 ? `<div class="mt-2 text-[10px] font-bold text-[#FF6D1F] border-t border-[#FAF3E1] pt-1 tracking-tight italic">👁️ 眼牌：${eyeNames}</div>` : ''}
+                </div>`;
+            }).join(''); lucide.createIcons();
+        }
+
+        function renderHistoryList() {
+            const list = document.getElementById('history-list');
+            if (state.history.length === 0) { list.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border-2 border-[#F5E7C6] text-slate-300 italic text-sm">檔案為空</div>`; return; }
+            list.innerHTML = state.history.map(record => `
+                <div class="bg-white rounded-2xl shadow border-2 border-[#F5E7C6] overflow-hidden">
+                    <div class="bg-[#FAF3E1] px-4 py-3 border-b border-[#F5E7C6] flex justify-between items-center">
+                        <span class="font-black text-slate-600 text-[10px] uppercase">第 ${record.roundNumber} 將 • ${record.date}</span>
+                        <span class="text-[11px] text-[#FF6D1F] font-black bg-white px-3 py-1 rounded-full border border-[#F5E7C6] shadow-sm">$${record.dong}</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="grid grid-cols-4 gap-2">
+                            ${record.players.map(pid => `
+                                <div class="text-center flex flex-col items-center">
+                                    <p class="text-[10px] font-black text-[#222222]/60 mb-1 uppercase">${FIXED_PLAYERS.find(p => p.id === pid).name}</p>
+                                    <p class="text-lg font-black ${record.scores[pid] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${record.scores[pid] > 0 ? '+' : ''}${record.scores[pid]}</p>
+                                    <div class="mt-2 flex flex-col gap-0.5 w-full text-[9px] font-bold text-slate-400">
+                                        <span>胡：${record.stats.wins[pid]}</span>
+                                        <span>摸：${record.stats.selfDraws[pid]}</span>
+                                        <span>槍：${record.stats.losses[pid]}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        function updateModifierUI() {
+            const dice = document.getElementById('btn-dice'); const leo = document.getElementById('btn-leopard');
+            dice.className = state.newHand.isDiceReturn ? "p-4 rounded-xl border-2 transition-all bg-[#FF6D1F] border-transparent text-white shadow-md" : "p-4 rounded-xl border-2 transition-all border-[#F5E7C6] bg-white text-slate-200";
+            leo.className = state.newHand.isLeopard ? "p-4 rounded-xl border-2 transition-all bg-[#222222] border-transparent text-white shadow-md" : "p-4 rounded-xl border-2 transition-all border-[#F5E7C6] bg-white text-slate-200";
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
