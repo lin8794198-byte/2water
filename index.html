@@ -13,11 +13,10 @@
             font-family: 'Noto Sans TC', sans-serif; 
             -webkit-tap-highlight-color: transparent;
             font-size: 0.95rem; 
-            background-color: #FAF3E1; /* 色調 1 */
+            background-color: #FAF3E1;
         }
         
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #F5E7C6; border-radius: 10px; }
         
         input[type="number"]::-webkit-inner-spin-button, 
@@ -34,11 +33,11 @@
         .stat-label { font-size: 0.75rem !important; }
 
         /* 顏色定義 */
-        .text-orange { color: #FF6D1F; } /* 強調色 3 */
+        .text-orange { color: #FF6D1F; }
         .bg-orange { background-color: #FF6D1F; }
-        .text-dark { color: #222222; } /* 質感黑 4 */
+        .text-dark { color: #222222; }
         .bg-dark { background-color: #222222; }
-        .border-beige { border-color: #F5E7C6; } /* 暖沙色 2 */
+        .border-beige { border-color: #F5E7C6; }
         .bg-beige { background-color: #F5E7C6; }
         
         .card-shadow { box-shadow: 0 4px 12px rgba(34, 34, 34, 0.05); }
@@ -56,7 +55,7 @@
                 <h1 class="font-black tracking-tight title-main text-white">麻將大師群</h1>
             </div>
             <div class="flex space-x-2">
-                <button onclick="exportToCsv()" class="bg-[#FF6D1F] hover:opacity-90 px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-bold text-xs text-white shadow-sm">
+                <button onclick="exportToCsv()" class="bg-[#FF6D1F] hover:opacity-90 px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-bold text-xs text-white">
                     <i data-lucide="download" class="w-4 h-4 text-white"></i> 匯出 CSV
                 </button>
                 <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all text-white">
@@ -93,7 +92,7 @@
                         <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2">
                             <i data-lucide="users" class="w-4 h-4 text-[#FF6D1F]"></i> 1. 上場玩家 (點選4人)
                         </h2>
-                        <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic">對局中名單已鎖定</span>
+                        <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic">紀錄中，鎖定玩家</span>
                     </div>
                     <div id="player-selection-grid" class="grid grid-cols-5 gap-2"></div>
                 </div>
@@ -114,12 +113,12 @@
                                     <span class="font-bold text-[#222222] text-xs">莊家連莊數：</span>
                                     <input type="number" id="consecutive-input" value="0" min="0" max="20" onchange="updateConsecutiveWins(this.value)" class="w-16 bg-slate-50 border-none rounded text-lg font-black text-center py-1 outline-none focus:ring-2 focus:ring-[#FF6D1F] font-mono text-[#FF6D1F]">
                                 </div>
-                                <div class="bg-white p-3 rounded-xl border border-[#F5E7C6] shadow-sm">
-                                    <div class="flex items-center gap-1.5 mb-2 text-[#222222]">
+                                <div class="bg-white p-3 rounded-xl border border-[#F5E7C6] shadow-sm text-[#222222]">
+                                    <div class="flex items-center gap-1.5 mb-2">
                                         <i data-lucide="eye" class="w-4 h-4 text-[#FF6D1F]"></i>
                                         <span class="font-bold text-xs">本局眼牌名單：</span>
                                     </div>
-                                    <div id="eye-watcher-grid" class="grid grid-cols-4 gap-2"></div>
+                                    <div id="eye-watcher-grid" class="grid grid-cols-4 gap-2 text-white"></div>
                                 </div>
                             </div>
                         </div>
@@ -136,18 +135,18 @@
                         </div>
                     </div>
 
-                    <div class="mt-8 flex items-end gap-3">
+                    <div class="mt-8 flex items-end gap-3 text-white">
                         <div class="flex-1 space-y-1">
                             <label class="text-[10px] font-black text-slate-400 block text-center italic">起跳台數 (莊/摸保底1台)</label>
                             <input type="number" id="tai-input" placeholder="0" min="0" oninput="this.value = Math.abs(this.value)" class="w-full bg-slate-50 border border-[#F5E7C6] rounded-xl p-4 font-mono font-black tai-input-large text-center outline-none focus:ring-2 focus:ring-[#FF6D1F] shadow-inner text-[#222222]">
                         </div>
-                        <div class="flex gap-1.5 pb-1">
-                            <button id="btn-dice" onclick="toggleModifier('dice')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-400 shadow-sm" title="骰規 +2台"><i data-lucide="dices" class="w-6 h-6"></i></button>
-                            <button id="btn-leopard" onclick="toggleModifier('leopard')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-400 shadow-sm" title="豹子 x2"><i data-lucide="zap" class="w-6 h-6"></i></button>
+                        <div class="flex gap-1.5 pb-1 text-white">
+                            <button id="btn-dice" onclick="toggleModifier('dice')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-300 shadow-sm" title="骰規 +2台"><i data-lucide="dices" class="w-6 h-6"></i></button>
+                            <button id="btn-leopard" onclick="toggleModifier('leopard')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-300 shadow-sm" title="豹子 x2"><i data-lucide="zap" class="w-6 h-6"></i></button>
                         </div>
                     </div>
 
-                    <button onclick="addHand()" class="w-full mt-8 bg-[#FF6D1F] hover:opacity-90 text-white py-4 rounded-xl font-black btn-record flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all text-white border-b-4 border-[#222222]/20">
+                    <button onclick="addHand()" class="w-full mt-8 bg-[#FF6D1F] hover:opacity-90 text-white py-4 rounded-xl font-black btn-record flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all border-b-4 border-[#222222]/20">
                         <i data-lucide="save" class="w-5 h-5 text-white"></i> 記錄這筆
                     </button>
                 </div>
@@ -297,7 +296,7 @@
             const dealerId = state.newHand.dealerId;
 
             if (!winnerId || !loserId || isNaN(taiInput) || !dealerId) {
-                alert("請選取贏家與輸家！"); return;
+                alert("請完整選取贏家與輸家！"); return;
             }
 
             if (winnerId === dealerId || loserId === 'all') {
@@ -432,7 +431,7 @@
                 <div class="text-center">
                     <p class="text-[10px] font-black text-[#222222] mb-0.5">${p.name}</p>
                     <p class="text-[11px] font-black ${bal >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${bal > 0 ? '+' : ''}${bal}</p>
-                    <div class="flex flex-col text-[8px] font-bold opacity-60 mt-1">
+                    <div class="flex flex-col text-[8px] font-bold opacity-60 mt-1 text-[#222222]">
                         <span>胡：${dailyStats.wins[p.id]}</span>
                         <span>摸：${dailyStats.selfDraws[p.id]}</span>
                         <span>槍：${dailyStats.losses[p.id]}</span>
@@ -492,7 +491,7 @@
         function renderPlayers() {
             document.getElementById('player-selection-grid').innerHTML = FIXED_PLAYERS.map(p => {
                 const sel = state.selectedPlayerIds.includes(p.id);
-                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold transition-all border-2 flex flex-col items-center justify-center ${sel ? 'bg-[#FF6D1F] border-transparent text-white shadow-md' : 'bg-white border-[#F5E7C6] text-slate-300'}"><span class="text-sm font-bold text-center">${p.name}</span></button>`;
+                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold transition-all border-2 flex flex-col items-center justify-center ${sel ? 'bg-[#FF6D1F] border-transparent text-white shadow-md' : 'bg-white border-[#F5E7C6] text-slate-300'}"><span class="text-sm">${p.name}</span></button>`;
             }).join('');
         }
 
@@ -507,7 +506,7 @@
             const grid = document.getElementById('eye-watcher-grid'); if (!grid) return;
             grid.innerHTML = state.selectedPlayerIds.map(pid => {
                 const act = state.eyeWatchers.includes(pid);
-                return `<button onclick="toggleEyeWatcher(${pid})" class="py-2.5 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1 ${act ? 'bg-[#FF6D1F] border-transparent text-white shadow-sm' : 'bg-white border-[#F5E7C6] text-slate-200'}"><i data-lucide="eye" class="w-3 h-3 ${act ? 'text-white' : 'text-slate-100'}"></i>${FIXED_PLAYERS.find(x => x.id === pid).name}</button>`;
+                return `<button onclick="toggleEyeWatcher(${pid})" class="py-2.5 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1 ${act ? 'bg-[#FF6D1F] border-transparent text-white shadow-sm' : 'bg-white border-[#F5E7C6] text-slate-400'}"><i data-lucide="eye" class="w-3 h-3 ${act ? 'text-white' : 'text-slate-100'}"></i>${FIXED_PLAYERS.find(x => x.id === pid).name}</button>`;
             }).join('');
             lucide.createIcons();
         }
@@ -527,11 +526,11 @@
                 const score = summary.scores[pid];
                 return `
                 <div class="text-center p-3.5 bg-white rounded-2xl border-2 border-[#F5E7C6] shadow flex flex-col items-center">
-                    <p class="text-base font-black text-[#222222] mb-1">${p.name}</p>
+                    <p class="text-base font-black text-[#222222] mb-1 text-center font-bold">${p.name}</p>
                     <p class="text-xl font-black ${score >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${score > 0 ? '+' : ''}${score}</p>
-                    <div class="flex flex-col gap-0.5 mt-2 w-full text-[11px] font-bold">
+                    <div class="flex flex-col gap-0.5 mt-2 w-full text-[11px] font-bold text-[#222222]">
                         <span class="bg-[#FF6D1F]/5 text-[#FF6D1F] py-0.5 rounded w-full border border-[#FF6D1F]/10">胡：${summary.stats.wins[pid]}</span>
-                        <span class="bg-[#222222]/5 text-[#222222] py-0.5 rounded w-full border border-[#222222]/10">摸：${summary.stats.selfDraws[pid]}</span>
+                        <span class="bg-slate-50 text-[#222222] py-0.5 rounded w-full border border-[#F5E7C6]">摸：${summary.stats.selfDraws[pid]}</span>
                         <span class="bg-[#222222]/5 text-[#222222] py-0.5 rounded w-full border border-[#222222]/10 opacity-40">槍：${summary.stats.losses[pid]}</span>
                     </div>
                 </div>`;
@@ -543,6 +542,18 @@
             if (state.roundHands.length === 0) { list.innerHTML = `<p class="text-center py-6 text-slate-300 italic text-sm">尚未有小局紀錄...</p>`; return; }
             list.innerHTML = state.roundHands.map(h => {
                 const eyeNames = h.eyeWatchers.map(id => FIXED_PLAYERS.find(x => x.id === id).name).join(', ');
+                
+                // 自摸詳情顯示邏輯
+                let detailDisplay = "";
+                if (h.loserId === 'all') {
+                    const others = state.selectedPlayerIds.filter(pid => pid !== h.winnerId);
+                    const detailStr = others.map(pid => {
+                        const pName = FIXED_PLAYERS.find(p => p.id === pid).name;
+                        return `${pName}：${h.impacts[pid]}`;
+                    }).join(' / ') + ` / 東錢：${h.dong}`;
+                    detailDisplay = `<p class="text-[10px] font-bold opacity-70 mt-1 tracking-tight">(${detailStr})</p>`;
+                }
+
                 return `
                 <div class="flex flex-col p-4 bg-white rounded-xl border border-[#F5E7C6] group shadow-sm transition-all">
                     <div class="flex items-center justify-between">
@@ -558,9 +569,10 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="font-mono font-black text-base ${h.impacts[h.winnerId] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${h.impacts[h.winnerId] > 0 ? '+' : ''}${h.impacts[h.winnerId]}</span>
-                            <button onclick="deleteHand(${h.id})" class="text-slate-300 p-1 hover:text-[#222222] transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <button onclick="deleteHand(${h.id})" class="text-slate-200 p-1 hover:text-[#222222] transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </div>
+                    ${detailDisplay}
                     ${h.eyeWatchers.length > 0 ? `<div class="mt-2 text-[10px] font-bold text-[#FF6D1F] border-t border-[#FAF3E1] pt-1 tracking-tight italic">👁️ 眼牌：${eyeNames}</div>` : ''}
                 </div>`;
             }).join(''); lucide.createIcons();
@@ -570,7 +582,7 @@
             const list = document.getElementById('history-list');
             if (state.history.length === 0) { list.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border-2 border-[#F5E7C6] text-slate-300 italic text-sm">檔案為空</div>`; return; }
             list.innerHTML = state.history.map(record => `
-                <div class="bg-white rounded-2xl shadow border-2 border-[#F5E7C6] overflow-hidden">
+                <div class="bg-white rounded-2xl shadow border-2 border-[#F5E7C6] overflow-hidden text-[#222222]">
                     <div class="bg-[#FAF3E1] px-4 py-3 border-b border-[#F5E7C6] flex justify-between items-center">
                         <span class="font-black text-slate-600 text-[10px] uppercase">第 ${record.roundNumber} 將 • ${record.date}</span>
                         <span class="text-[11px] text-[#FF6D1F] font-black bg-white px-3 py-1 rounded-full border border-[#F5E7C6] shadow-sm">$${record.dong}</span>
@@ -579,7 +591,7 @@
                         <div class="grid grid-cols-4 gap-2">
                             ${record.players.map(pid => `
                                 <div class="text-center flex flex-col items-center">
-                                    <p class="text-[10px] font-black text-[#222222]/60 mb-1 uppercase">${FIXED_PLAYERS.find(p => p.id === pid).name}</p>
+                                    <p class="text-[10px] font-black text-slate-500 mb-1 uppercase">${FIXED_PLAYERS.find(p => p.id === pid).name}</p>
                                     <p class="text-lg font-black ${record.scores[pid] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${record.scores[pid] > 0 ? '+' : ''}${record.scores[pid]}</p>
                                     <div class="mt-2 flex flex-col gap-0.5 w-full text-[9px] font-bold text-slate-400">
                                         <span>胡：${record.stats.wins[pid]}</span>
