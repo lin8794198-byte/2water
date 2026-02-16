@@ -441,4 +441,134 @@
         window.finalizeRound = async () => {
             if (state.roundHands.length === 0 || !auth.currentUser) return;
             if (!confirm("確定結算本將？")) return;
-            const sc = {1:0,2:0,3:0,4
+            const sc = {1:0,2:0,3:0,4:0,5:0}, st = { wins:{1:0,2:0,3:0,4:0,5:0}, selfDraws:{1:0,2:0,3:0,4:0,5:0}, losses:{1:0,2:0,3:0,4:0,5:0} };
+            let dTot = 0;
+            state.roundHands.forEach(h => { Object.keys(h.impacts).forEach(p => sc[p] += h.impacts[p]); dTot += h.dong; if (h.loserId === 'all') st.selfDraws[h.winnerId]++; else { st.wins[h.winnerId]++; st.losses[h.loserId]++; } });
+            await addDoc(historyColl, { date: state.sessionDate, roundNumber: state.rounds + 1, players: state.selectedPlayerIds, scores: sc, stats: st, dong: dTot, timestamp: Date.now() });
+            (await getDocs(handsColl)).forEach(d => deleteDoc(d.ref));
+            updateState({ rounds: state.rounds + 1, totalDong: state.totalDong + dTot });
+        };
+
+        function resetForm() { 
+            const ws = document.getElementById('winner-select');
+            const ls = document.getElementById('loser-select');
+            const ti = document.getElementById('tai-input');
+            if(ws) ws.value = ""; if(ls) ls.value = ""; if(ti) ti.value = ""; 
+            state.isDiceReturn = false; state.isLeopard = false; 
+            updateModifierUI(); 
+        }
+
+        // --- 渲染介面 ---
+        function renderAll() {
+            const sum = {1:0,2:0,3:0,4:0,5:0}, st = {w:{1:0,2:0,3:0,4:0,5:0},m:{1:0,2:0,3:0,4:0,5:0},q:{1:0,2:0,3:0,4:0,5:0}};
+            let rdD = 0;
+            state.roundHands.forEach(h => { Object.keys(h.impacts).forEach(p => sum[p] += h.impacts[p]); rdD += h.dong; if (h.loserId === 'all') st.m[h.winnerId]++; else { st.w[h.winnerId]++; st.q[h.loserId]++; } });
+            
+            const tr = document.getElementById('total-rounds'); if(tr) tr.textContent = state.rounds;
+            const td = document.getElementById('total-dong'); if(td) td.textContent = `$${state.totalDong}`;
+            const rdd = document.getElementById('round-dong-display'); if(rdd) rdd.textContent = `$${rdD}`;
+            const ubtn = document.getElementById('undo-btn'); if(ubtn) ubtn.disabled = state.roundHands.length === 0;
+            
+            const pg = document.getElementById('player-selection-grid');
+            if(pg) pg.innerHTML = FIXED_PLAYERS.map(p => {
+                const sel = state.selectedPlayerIds.includes(p.id);
+                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold border-2 transition-all ${sel?'bg-[#FF6D1F] border-transparent text-white shadow-md':'bg-white border-[#F5E7C6] text-slate-300'}"><span>${p.name}</span></button>`;
+            }).join('');
+
+            const seats = ["東","南","西","北"];
+            const dsc = document.getElementById('dealer-selection-container');
+            if(dsc) dsc.innerHTML = state.selectedPlayerIds.map((p,i) => {
+                const act = state.currentDealerId === p;
+                return `<div class="flex flex-col gap-1 text-slate-400"><span class="stat-label text-center font-bold">${seats[i]}</span><button onclick="setDealer(${p})" class="py-3 rounded-xl font-bold border-2 ${act?'bg-[#222222] text-white shadow-md':'bg-white border-[#F5E7C6] text-slate-400'}">${FIXED_PLAYERS.find(x=>x.id==p).name}</button></div>`;
+            }).join('');
+
+            const ewg = document.getElementById('eye-watcher-grid');
+            if (ewg) ewg.innerHTML = state.selectedPlayerIds.map(p => { const act = state.eyeWatchers.includes(p); return `<button onclick="toggleEyeWatcher(${p})" class="py-2.5 rounded-lg text-xs font-bold border ${act?'bg-[#FF6D1F] text-white':'bg-white border-[#F5E7C6] text-slate-400'}"><i data-lucide="eye" class="w-3 h-3"></i>${FIXED_PLAYERS.find(x=>x.id==p).name}</button>`; }).join('');
+
+            const ws = document.getElementById('winner-select'), ls = document.getElementById('loser-select');
+            if(ws && ls) {
+                const curW = parseInt(ws.value), curL = ls.value;
+                const psSelected = FIXED_PLAYERS.filter(p=>state.selectedPlayerIds.includes(p.id));
+                ws.innerHTML = `<option value="">胡牌</option>` + psSelected.map(p=>`<option value="${p.id}" ${curW==p.id?'selected':''}>${p.name}</option>`).join('');
+                ls.innerHTML = `<option value="">放槍</option><option value="all" ${curL=='all'?'selected':''}>🌟 自摸</option>` + psSelected.filter(p=>p.id!=curW).map(p=>`<option value="${p.id}" ${curL==p.id?'selected':''}>${p.name}</option>`).join('');
+            }
+
+            const csg = document.getElementById('current-summary-grid');
+            if(csg) csg.innerHTML = state.selectedPlayerIds.map(p => {
+                const x = FIXED_PLAYERS.find(i=>i.id==p);
+                return `<div class="bg-white p-3 rounded-2xl border-2 border-[#F5E7C6] shadow-sm"><p class="text-xs font-bold text-slate-800 mb-1">${x.name}</p><p class="text-lg font-black ${sum[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${sum[p]>0?'+':''}${sum[p]}</p><div class="flex flex-col text-[8px] font-bold opacity-30 mt-1 text-[#222222]"><span>胡:${st.w[p]} / 摸:${st.m[p]} / 槍:${st.q[p]}</span></div></div>`;
+            }).join('');
+
+            const hl = document.getElementById('hands-list');
+            if(hl) {
+                if(state.roundHands.length==0) hl.innerHTML = `<p class="py-6 opacity-20 italic text-center text-[#222222]">尚無雲端紀錄...</p>`;
+                else hl.innerHTML = state.roundHands.map(h => {
+                    let det = h.loserId=='all' ? `<p class="text-[9px] opacity-50 italic text-[#222222]">(${state.selectedPlayerIds.filter(i=>i!=h.winnerId).map(i=>FIXED_PLAYERS.find(x=>x.id==i).name+":"+h.impacts[i]).join(' / ')})</p>` : "";
+                    return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center"><div class="text-left text-[#222222]"><div class="flex items-center gap-2 text-center font-bold text-[#222222]"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊:${FIXED_PLAYERS.find(x=>x.id==h.dealerId).name}(${h.consecutiveWins})</span><span class="font-bold text-[#FF6D1F]">${FIXED_PLAYERS.find(x=>x.id==h.winnerId).name}</span><span class="text-xs text-[#222222]">${h.loserId=='all'?'自摸':'胡'+FIXED_PLAYERS.find(x=>x.id==h.loserId).name} ${h.tai}台</span></div>${det}</div><div class="font-mono font-black ${h.impacts[h.winnerId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.impacts[h.winnerId]>0?'+':''}${h.impacts[h.winnerId]}</div></div>`;
+                }).join('');
+            }
+
+            const hlist = document.getElementById('history-list');
+            if(hlist) {
+                if(state.history.length==0) hlist.innerHTML = `<div class="text-center py-10 opacity-20 italic text-sm text-[#222222]">尚未有歷史紀錄</div>`;
+                else {
+                    hlist.innerHTML = state.history.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden text-[#222222]"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center text-[#222222]"><span class="text-[10px] font-black opacity-40 text-[#222222]">第 ${r.roundNumber} 將 • ${r.date}</span><span class="text-[10px] font-black text-[#FF6D1F]">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center">${r.players.map(p => `<div><p class="text-[9px] opacity-40 font-bold text-[#222222]">${FIXED_PLAYERS.find(x=>x.id==p).name}</p><p class="text-xs font-black ${r.scores[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[p]}</p></div>`).join('')}</div></div>`).join('');
+                    const sb = document.getElementById('settlement-container');
+                    if(sb) sb.classList.remove('hidden');
+                }
+            }
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.handleInputChange = () => {
+            const winS = document.getElementById('winner-select'), losS = document.getElementById('loser-select'), taiI = document.getElementById('tai-input');
+            if(!winS || !losS || !taiI || !state.currentDealerId) return;
+            const w = parseInt(winS.value), l = losS.value;
+            if(w == state.currentDealerId || (l != 'all' && parseInt(l) == state.currentDealerId)) taiI.value = (state.consecutiveWins[state.currentDealerId]==0?1:2*state.consecutiveWins[state.currentDealerId]+1);
+            else if(l=='all') taiI.value = 1; else taiI.value = 0;
+        };
+
+        function updateModifierUI() {
+            const bd = document.getElementById('btn-dice'), bl = document.getElementById('btn-leopard');
+            if(bd) bd.className = state.isDiceReturn ? "p-3.5 rounded-xl border-2 bg-[#FF6D1F] text-white" : "p-3.5 rounded-xl border-2 bg-white text-slate-100";
+            if(bl) bl.className = state.isLeopard ? "p-3.5 rounded-xl border-2 bg-[#222222] text-white" : "p-3.5 rounded-xl border-2 bg-white text-slate-100";
+        }
+
+        window.calculateSettlement = () => {
+            const today = state.history.filter(r => r.date === state.sessionDate);
+            const net = {1:0,2:0,3:0,4:0,5:0}; let dS = today.reduce((a, b) => a + (b.dong || 0), 0);
+            today.forEach(r => Object.keys(r.scores).forEach(p => net[p] += r.scores[p])); net[2] += dS;
+            
+            const sdl = document.getElementById('settle-date-label'); if(sdl) sdl.textContent = `${state.sessionDate} 當日結帳`;
+            const sbl = document.getElementById('settle-balances-list');
+            if(sbl) sbl.innerHTML = FIXED_PLAYERS.map(p => `<div class="text-center text-[#222222]"><p class="text-[9px] font-bold opacity-40 text-[#222222]">${p.name}</p><p class="text-xs font-black ${net[p.id]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${net[p.id]}</p></div>`).join('');
+            
+            const deb = [], cre = []; Object.keys(net).forEach(p => { if(net[p]<0) deb.push({n:FIXED_PLAYERS.find(x=>x.id==p).name,a:Math.abs(net[p])}); else if(net[p]>0) cre.push({n:FIXED_PLAYERS.find(x=>x.id==p).name,a:net[p]}); });
+            const ins = []; let di=0, ci=0;
+            while(di < deb.length && ci < cre.length) {
+                let s = Math.min(deb[di].a, cre[ci].a); ins.push(`<div class="flex justify-between bg-[#FAF3E1] p-3 rounded-lg border border-[#F5E7C6] text-xs text-[#222222] font-bold"><span>${deb[di].n} 👉 <span class="text-[#FF6D1F]">${cre[ci].n}</span></span><span>$${s}</span></div>`);
+                deb[di].a -= s; cre[ci].a -= s; if(deb[di].a===0) di++; if(cre[ci].a===0) ci++;
+            }
+            const si = document.getElementById('settle-instructions');
+            if(si) si.innerHTML = ins.length ? ins.join('') : '<p class="text-center text-xs opacity-20 italic">帳目平衡</p>';
+        };
+
+        window.exportToCsv = () => {
+            let csv = "\ufeff日期,將數,東錢,玩家,得分\n";
+            state.history.forEach(r => r.players.forEach(p => csv += `${r.date},第${r.roundNumber}將,${r.dong},${FIXED_PLAYERS.find(x => x.id === p).name},${r.scores[p]}\n`));
+            const l = document.createElement("a"); l.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})); l.download = `戰績同步_${state.sessionDate}.csv`; l.click();
+        };
+
+        window.resetData = async () => {
+            if(!confirm('這會清空雲端所有數據，確定？')) return;
+            await setDoc(globalRef, { sessionDate: state.sessionDate, selectedPlayerIds:[1,2,3,4], consecutiveWins:{1:0,2:0,3:0,4:0,5:0}, rounds:0, totalDong:0, currentDealerId:null, eyeWatchers:[] });
+            const handsSnap = await getDocs(handsColl); handsSnap.forEach(d => deleteDoc(d.ref));
+            const histSnap = await getDocs(historyColl); histSnap.forEach(d => deleteDoc(d.ref));
+            const redoSnap = await getDocs(redoColl); redoSnap.forEach(d => deleteDoc(d.ref));
+            location.reload();
+        };
+
+        start();
+    </script>
+</body>
+</html>
