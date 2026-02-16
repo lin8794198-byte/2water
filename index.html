@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>麻將大師群</title>
+    <title>麻將大師群 - 雲端同步版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -13,7 +13,7 @@
             font-family: 'Noto Sans TC', sans-serif; 
             -webkit-tap-highlight-color: transparent;
             font-size: 0.95rem; 
-            background-color: #FAF3E1; /* 1. 底色 */
+            background-color: #FAF3E1; /* 底色 */
         }
         
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -29,38 +29,49 @@
         .tai-input-large { font-size: 2.25rem !important; }
         .stat-label { font-size: 0.75rem !important; }
 
-        /* 顏色主題 */
-        .text-orange { color: #FF6D1F; } /* 3. 強調橘 */
+        .text-orange { color: #FF6D1F; }
         .bg-orange { background-color: #FF6D1F; }
-        .text-dark { color: #222222; } /* 4. 質感黑 */
+        .text-dark { color: #222222; }
         .bg-dark { background-color: #222222; }
-        .border-beige { border-color: #F5E7C6; } /* 2. 暖沙色 */
+        .border-beige { border-color: #F5E7C6; }
         .bg-beige { background-color: #F5E7C6; }
         
         .card-shadow { box-shadow: 0 4px 12px rgba(34, 34, 34, 0.05); }
 
-        /* 按鈕動畫 */
-        .undo-btn:active { transform: rotate(-45deg) scale(0.9); }
-        .redo-btn:active { transform: rotate(45deg) scale(0.9); }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(250, 243, 225, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999;
+        }
     </style>
 </head>
 <body class="min-h-screen p-2 md:p-6 text-[#222222] pb-24 text-center">
 
+    <!-- 雲端同步讀取遮罩 -->
+    <div id="loader" class="loading-overlay">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6D1F]"></div>
+        <p class="mt-4 font-black text-[#FF6D1F]">正在連線雲端資料庫...</p>
+    </div>
+
     <div class="max-w-4xl mx-auto space-y-4">
         <!-- Header -->
-        <div class="bg-[#222222] p-5 rounded-2xl text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="bg-[#222222] p-5 rounded-2xl text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 text-center">
             <div class="flex items-center justify-center space-x-3 text-white">
                 <div class="bg-white/10 p-2 rounded-xl border border-white/10">
-                    <i data-lucide="trophy" class="w-6 h-6 text-[#FF6D1F]"></i>
+                    <i data-lucide="cloud-lightning" class="w-6 h-6 text-[#FF6D1F]"></i>
                 </div>
-                <h1 class="font-black tracking-tight title-main text-white">麻將大師群</h1>
+                <div class="text-left">
+                    <h1 class="font-black tracking-tight title-main text-white">麻將大師群</h1>
+                    <p class="text-[8px] opacity-40">AUTO SYNC ACTIVE</p>
+                </div>
             </div>
             <div class="flex space-x-2">
                 <button onclick="exportToCsv()" class="bg-[#FF6D1F] hover:opacity-90 px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-bold text-xs text-white shadow-sm">
                     <i data-lucide="download" class="w-4 h-4 text-white"></i> 匯出 CSV
                 </button>
                 <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all text-white">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-white"></i>
                 </button>
             </div>
         </div>
@@ -69,7 +80,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
             <div class="bg-white p-3 rounded-xl border-2 border-[#F5E7C6] card-shadow">
                 <label class="stat-label font-black text-slate-400 uppercase block mb-1">日期</label>
-                <input type="date" id="session-date" class="w-full font-bold text-[#222222] outline-none bg-transparent text-center text-sm">
+                <input type="date" id="session-date" onchange="updateState({sessionDate: this.value})" class="w-full font-bold text-[#222222] outline-none bg-transparent text-center text-sm">
             </div>
             <div class="bg-white p-3 rounded-xl border-2 border-[#F5E7C6] font-mono card-shadow">
                 <label class="stat-label font-black text-slate-400 uppercase block mb-1">將數</label>
@@ -93,15 +104,15 @@
                         <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2">
                             <i data-lucide="users" class="w-4 h-4 text-[#FF6D1F]"></i> 1. 上場玩家
                         </h2>
-                        <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic">對局進行中，鎖定玩家</span>
+                        <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic">雲端同步中</span>
                     </div>
-                    <div id="player-selection-grid" class="grid grid-cols-5 gap-2"></div>
+                    <div id="player-selection-grid" class="grid grid-cols-5 gap-2 text-center text-white"></div>
                 </div>
 
                 <!-- 2. Record a Hand -->
                 <div class="bg-white p-6 rounded-2xl border-2 border-[#F5E7C6] card-shadow relative overflow-hidden">
                     <h2 class="text-sm font-black text-[#222222] uppercase mb-4 flex items-center gap-2">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-[#FF6D1F]"></i> 2. 紀錄胡牌
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-[#FF6D1F]"></i> 2. 當下胡牌紀錄
                     </h2>
                     
                     <div class="space-y-4">
@@ -119,7 +130,7 @@
                                         <i data-lucide="eye" class="w-4 h-4 text-[#FF6D1F]"></i>
                                         <span class="font-bold text-xs">本局眼牌：</span>
                                     </div>
-                                    <div id="eye-watcher-grid" class="grid grid-cols-4 gap-2 text-center"></div>
+                                    <div id="eye-watcher-grid" class="grid grid-cols-4 gap-2 text-white"></div>
                                 </div>
                             </div>
                         </div>
@@ -137,7 +148,7 @@
                     </div>
 
                     <div class="mt-8 flex items-end gap-3 text-center">
-                        <div class="flex-1 space-y-1 text-center">
+                        <div class="flex-1 space-y-1">
                             <label class="text-[10px] font-black text-slate-500 block text-center italic font-bold">請輸入總台數 (含莊連莊台)</label>
                             <input type="number" id="tai-input" placeholder="0" min="0" oninput="this.value = Math.abs(this.value)" class="w-full bg-slate-50 border border-[#F5E7C6] rounded-xl p-4 font-mono font-black tai-input-large text-center outline-none focus:ring-2 focus:ring-[#FF6D1F] shadow-inner text-[#222222]">
                         </div>
@@ -147,7 +158,7 @@
                         </div>
                     </div>
 
-                    <button onclick="addHand()" class="w-full mt-8 bg-[#FF6D1F] hover:opacity-90 text-white py-4 rounded-xl font-black btn-record flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all text-white border-b-4 border-[#222222]/20">
+                    <button onclick="addHand()" class="w-full mt-8 bg-[#FF6D1F] hover:opacity-90 text-white py-4 rounded-xl font-black flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all text-white border-b-4 border-[#222222]/20">
                         <i data-lucide="save" class="w-5 h-5 text-white"></i> 記錄這筆
                     </button>
                 </div>
@@ -158,12 +169,11 @@
                         <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 font-bold">
                             <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#FF6D1F]"></i> 3. 即時計分
                         </h2>
-                        <!-- 復原與重做按鈕組 -->
                         <div class="flex items-center gap-1">
-                            <button onclick="undoAction()" id="undo-btn" title="上一步" class="undo-btn flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] hover:border-[#FF6D1F] transition-all disabled:opacity-20 disabled:pointer-events-none" disabled>
+                            <button onclick="undoAction()" id="undo-btn" title="上一步" class="flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10">
                                 <i data-lucide="undo-2" class="w-5 h-5"></i>
                             </button>
-                            <button onclick="redoAction()" id="redo-btn" title="下一步" class="redo-btn flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] hover:border-[#FF6D1F] transition-all disabled:opacity-20 disabled:pointer-events-none" disabled>
+                            <button onclick="redoAction()" id="redo-btn" title="下一步" class="flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10">
                                 <i data-lucide="redo-2" class="w-5 h-5"></i>
                             </button>
                         </div>
@@ -178,7 +188,7 @@
                             </span>
                             <div class="text-[#222222] font-black text-2xl font-mono" id="round-dong-display">$0</div>
                         </div>
-                        <button onclick="finalizeRound()" class="w-full bg-[#222222] hover:bg-black text-white py-4 rounded-xl font-black btn-record flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-all border-b-4 border-black">
+                        <button onclick="finalizeRound()" class="w-full bg-[#222222] hover:bg-black text-white py-4 rounded-xl font-black flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-all border-b-4 border-black">
                             <i data-lucide="check-square" class="w-5 h-5 text-[#FF6D1F]"></i> 結束本將
                         </button>
                     </div>
@@ -187,13 +197,13 @@
 
             <!-- History Panel -->
             <div class="lg:col-span-5 space-y-4 text-left">
-                <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2 text-black">
+                <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2">
                     <i data-lucide="history" class="w-4 h-4 text-[#FF6D1F]"></i> 歷史紀錄
                 </h2>
                 <div id="history-list" class="space-y-4 max-h-[1400px] overflow-y-auto pr-1 pb-4 custom-scrollbar"></div>
                 
                 <div id="settlement-container" class="space-y-4 hidden">
-                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95 text-white">
+                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95">
                         <i data-lucide="wallet" class="w-5 h-5 text-white"></i> 當日統一結帳
                     </button>
                     <div id="settlement-result" class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] shadow-lg space-y-4 transition-all">
@@ -209,15 +219,27 @@
         </div>
     </div>
 
-    <script>
-        const FIXED_PLAYERS = [
-            { id: 1, name: '阿茂' }, { id: 2, name: '小為' }, { id: 3, name: '阿仁' },
-            { id: 4, name: '榮緯' }, { id: 5, name: 'Karl' }
-        ];
-        const BASE_MONEY = 50;
-        const TAI_MONEY = 20;
-        const DONG_FEE = 20;
-        const SEATS = ["東位", "南位", "西位", "北位"];
+    <!-- Firebase SDK (多人同步後台) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, setDoc, collection, addDoc, deleteDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 從環境變數獲取配置
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mahjong-master-group';
+
+        // 雲端數據節點 (嚴格遵守 6 段/5 段路徑規範)
+        const globalRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'globalState');
+        const handsColl = collection(db, 'artifacts', appId, 'public', 'data', 'hands');
+        const historyColl = collection(db, 'artifacts', appId, 'public', 'data', 'history');
+        const redoColl = collection(db, 'artifacts', appId, 'public', 'data', 'redo');
+
+        const FIXED_PLAYERS = [{id:1,name:'阿茂'},{id:2,name:'小為'},{id:3,name:'阿仁'},{id:4,name:'榮緯'},{id:5,name:'Karl'}];
+        const BASE_MONEY = 50, TAI_MONEY = 20, DONG_FEE = 20;
 
         let state = {
             sessionDate: new Date().toISOString().split('T')[0],
@@ -226,473 +248,330 @@
             eyeWatchers: [],
             rounds: 0,
             totalDong: 0,
-            totalScores: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
             roundHands: [],
             history: [],
-            newHand: { dealerId: null, isDiceReturn: false, isLeopard: false },
-            historyStack: [],
-            redoStack: []
+            currentDealerId: null,
+            isDiceReturn: false,
+            isLeopard: false
         };
 
-        window.onload = () => {
-            document.getElementById('session-date').value = state.sessionDate;
-            renderAll();
-        };
-
-        // 目前狀態備份
-        function takeSnapshot() {
-            return JSON.stringify({
-                roundHands: state.roundHands,
-                consecutiveWins: state.consecutiveWins,
-                totalScores: state.totalScores,
-                totalDong: state.totalDong,
-                rounds: state.rounds,
-                dealerId: state.newHand.dealerId
+        // --- 初始化 & 身份驗證 ---
+        async function init() {
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    // 執行身份驗證
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    return;
+                }
+                
+                // 登入後啟動同步
+                setupSync();
             });
         }
 
-        // 保存到歷史棧，並清空重做棧
-        function saveHistory() {
-            state.historyStack.push(takeSnapshot());
-            state.redoStack = []; // 只要有新動作，就不能重做
-            if (state.historyStack.length > 30) state.historyStack.shift();
-            updateUndoRedoButtons();
+        function setupSync() {
+            // 1. 全域狀態同步
+            onSnapshot(globalRef, (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    state.sessionDate = data.sessionDate || state.sessionDate;
+                    state.selectedPlayerIds = data.selectedPlayerIds || state.selectedPlayerIds;
+                    state.consecutiveWins = data.consecutiveWins || state.consecutiveWins;
+                    state.rounds = data.rounds || 0;
+                    state.totalDong = data.totalDong || 0;
+                    state.currentDealerId = data.currentDealerId || null;
+                    state.eyeWatchers = data.eyeWatchers || [];
+                    document.getElementById('session-date').value = state.sessionDate;
+                    renderAll();
+                } else {
+                    // 初始化雲端預設值
+                    setDoc(globalRef, {
+                        sessionDate: state.sessionDate,
+                        selectedPlayerIds: state.selectedPlayerIds,
+                        consecutiveWins: state.consecutiveWins,
+                        rounds: 0, totalDong: 0, currentDealerId: null, eyeWatchers: []
+                    });
+                }
+            }, (err) => console.warn("Snapshot Error:", err));
+
+            // 2. 小局紀錄同步
+            onSnapshot(handsColl, (snap) => {
+                state.roundHands = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.timestamp - a.timestamp);
+                renderAll();
+                document.getElementById('loader').style.display = 'none';
+            }, (err) => console.warn("Hands Sync Error:", err));
+
+            // 3. 歷史數據同步
+            onSnapshot(historyColl, (snap) => {
+                state.history = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.timestamp - a.timestamp);
+                renderAll();
+            }, (err) => console.warn("History Sync Error:", err));
+
+            // 4. 重做棧監聽
+            onSnapshot(redoColl, (snap) => {
+                document.getElementById('redo-btn').disabled = snap.empty;
+            }, (err) => console.warn("Redo Sync Error:", err));
         }
 
-        // 復原
-        function undoAction() {
-            if (state.historyStack.length === 0) return;
-            state.redoStack.push(takeSnapshot()); // 把當前狀態存入重做棧
-            const prev = JSON.parse(state.historyStack.pop());
-            applySnapshot(prev);
-            renderAll();
-        }
+        // --- 核心邏輯 (加入 User 檢查保護) ---
 
-        // 重做
-        function redoAction() {
-            if (state.redoStack.length === 0) return;
-            state.historyStack.push(takeSnapshot()); // 把當前狀態存入歷史棧
-            const next = JSON.parse(state.redoStack.pop());
-            applySnapshot(next);
-            renderAll();
-        }
+        window.updateState = (updates) => {
+            if (!auth.currentUser) return;
+            updateDoc(globalRef, updates);
+        };
 
-        function applySnapshot(snap) {
-            state.roundHands = snap.roundHands;
-            state.consecutiveWins = snap.consecutiveWins;
-            state.totalScores = snap.totalScores;
-            state.totalDong = snap.totalDong;
-            state.rounds = snap.rounds;
-            state.newHand.dealerId = snap.dealerId;
-            updateUndoRedoButtons();
-        }
-
-        function updateUndoRedoButtons() {
-            document.getElementById('undo-btn').disabled = state.historyStack.length === 0;
-            document.getElementById('redo-btn').disabled = state.redoStack.length === 0;
-        }
-
-        function togglePlayer(id) {
+        window.togglePlayer = (id) => {
             if (state.roundHands.length > 0) return;
-            if (state.selectedPlayerIds.includes(id)) {
-                state.selectedPlayerIds = state.selectedPlayerIds.filter(pid => pid !== id);
-            } else if (state.selectedPlayerIds.length < 4) {
-                state.selectedPlayerIds.push(id);
-            }
-            renderAll();
-        }
+            let ids = [...state.selectedPlayerIds];
+            if (ids.includes(id)) ids = ids.filter(p => p !== id);
+            else if (ids.length < 4) ids.push(id);
+            updateState({ selectedPlayerIds: ids });
+        };
 
-        function toggleEyeWatcher(id) {
-            if (state.eyeWatchers.includes(id)) {
-                state.eyeWatchers = state.eyeWatchers.filter(pid => pid !== id);
-            } else {
-                state.eyeWatchers.push(id);
-            }
-            renderEyeWatcherUI();
-        }
+        window.setDealer = (id) => {
+            updateState({ currentDealerId: id, eyeWatchers: [] });
+        };
 
-        function getDealerJumpTai(n) {
-            return n === 0 ? 1 : (2 * n) + 1;
-        }
+        window.updateConsecutiveWins = (val) => {
+            if (!state.currentDealerId) return;
+            let wins = {...state.consecutiveWins};
+            wins[state.currentDealerId] = parseInt(val) || 0;
+            updateState({ consecutiveWins: wins });
+        };
 
-        function handleInputChange() {
-            const winnerId = parseInt(document.getElementById('winner-select').value);
-            const loserVal = document.getElementById('loser-select').value;
-            const dealerId = state.newHand.dealerId;
-            const input = document.getElementById('tai-input');
+        window.toggleEyeWatcher = (id) => {
+            let eyes = [...state.eyeWatchers];
+            if (eyes.includes(id)) eyes = eyes.filter(e => e !== id);
+            else eyes.push(id);
+            updateState({ eyeWatchers: eyes });
+        };
+
+        window.addHand = async () => {
+            if (!auth.currentUser) return;
+            const winId = parseInt(document.getElementById('winner-select').value);
+            const losVal = document.getElementById('loser-select').value;
+            const taiIn = parseInt(document.getElementById('tai-input').value);
+            if (!winId || !losVal || isNaN(taiIn) || !state.currentDealerId) { alert("選擇未完成！"); return; }
+
+            const curN = state.consecutiveWins[state.currentDealerId] || 0;
+            const dealerStake = (curN === 0 ? 1 : 2 * curN + 1);
+            const impacts = {};
+            state.selectedPlayerIds.forEach(id => impacts[id] = 0);
             
-            if (winnerId === dealerId || (loserVal !== 'all' && parseInt(loserVal) === dealerId)) {
-                input.value = getDealerJumpTai(state.consecutiveWins[dealerId] || 0);
-            } else if (loserVal === 'all') {
-                input.value = 1; 
+            const isSelf = losVal === 'all';
+            const diceTai = state.isDiceReturn ? 2 : 0;
+            const winEye = state.eyeWatchers.includes(winId);
+
+            if (isSelf) {
+                let winGain = 0;
+                state.selectedPlayerIds.forEach(pid => {
+                    if (pid === winId) return;
+                    let pTai = (winId === state.currentDealerId || pid === state.currentDealerId) ? (taiIn + diceTai) : (Math.max(0, taiIn - dealerStake) + diceTai);
+                    if (winEye) pTai += 1;
+                    if (state.eyeWatchers.includes(pid)) pTai += 1;
+                    let money = 50 + (pTai * TAI_MONEY);
+                    if (state.isLeopard) money *= 2;
+                    impacts[pid] = -money; winGain += money;
+                });
+                impacts[winId] = winGain - DONG_FEE;
             } else {
-                input.value = 0; 
+                let pTai = taiIn + diceTai;
+                if (winEye) pTai += 1;
+                let money = 50 + (pTai * TAI_MONEY);
+                if (state.isLeopard) money *= 2;
+                impacts[winId] = money; impacts[losVal] = -money;
+                state.selectedPlayerIds.forEach(pid => {
+                    if (pid !== winId && pid !== parseInt(losVal) && state.eyeWatchers.includes(pid)) {
+                        impacts[pid] -= TAI_MONEY; impacts[winId] += TAI_MONEY;
+                    }
+                });
             }
-            renderOptions(); 
-        }
 
-        function updateConsecutiveWins(val) {
-            if (state.newHand.dealerId) {
-                let num = parseInt(val) || 0;
-                if (num < 0) num = 0; if (num > 20) num = 20;
-                state.consecutiveWins[state.newHand.dealerId] = num;
-                handleInputChange();
+            await addDoc(handsColl, {
+                winnerId: winId, loserId: losVal, tai: taiIn, dealerId: state.currentDealerId,
+                consecutiveWins: curN, eyeWatchers: state.eyeWatchers, impacts, dong: isSelf ? DONG_FEE : 0,
+                timestamp: Date.now(), isDiceReturn: state.isDiceReturn, isLeopard: state.isLeopard
+            });
+
+            // 清空重做
+            const redos = await getDocs(redoColl); redos.forEach(d => deleteDoc(d.ref));
+
+            // 自動更新莊家狀態
+            let nextWins = {...state.consecutiveWins};
+            let nextD = state.currentDealerId;
+            if (winId === state.currentDealerId) nextWins[winId]++;
+            else {
+                nextWins[state.currentDealerId] = 0;
+                const idx = state.selectedPlayerIds.indexOf(state.currentDealerId);
+                nextD = state.selectedPlayerIds[(idx + 1) % 4];
             }
-        }
+            updateState({ consecutiveWins: nextWins, currentDealerId: nextD, eyeWatchers: [] });
+            resetForm();
+        };
 
-        function setDealer(id) { 
-            saveHistory();
-            state.newHand.dealerId = id; 
-            document.getElementById('dealer-consecutive-container').classList.remove('hidden');
-            const n = state.consecutiveWins[id] || 0;
-            document.getElementById('consecutive-input').value = n;
-            handleInputChange();
-            renderAll(); 
-        }
+        window.undoAction = async () => {
+            if (state.roundHands.length === 0 || !auth.currentUser) return;
+            const last = state.roundHands[0];
+            await addDoc(redoColl, {...last, timestamp: Date.now()});
+            await deleteDoc(doc(handsColl, last.id));
+            let wins = {...state.consecutiveWins}; wins[last.dealerId] = last.consecutiveWins;
+            updateState({ consecutiveWins: wins, currentDealerId: last.dealerId, eyeWatchers: last.eyeWatchers });
+        };
 
-        function toggleModifier(type) {
-            if (type === 'dice') { state.newHand.isDiceReturn = !state.newHand.isDiceReturn; state.newHand.isLeopard = false; }
-            else { state.newHand.isLeopard = !state.newHand.isLeopard; state.newHand.isDiceReturn = false; }
+        window.redoAction = async () => {
+            if (!auth.currentUser) return;
+            const redoQ = query(redoColl, orderBy('timestamp', 'desc'));
+            const snap = await getDocs(redoQ); if (snap.empty) return;
+            const data = snap.docs[0].data();
+            await addDoc(handsColl, {...data, timestamp: Date.now()});
+            await deleteDoc(snap.docs[0].ref);
+        };
+
+        window.finalizeRound = async () => {
+            if (state.roundHands.length === 0 || !auth.currentUser) return;
+            if (!confirm("確定結算本將？資料將轉入歷史紀錄。")) return;
+            const scores = {1:0,2:0,3:0,4:0,5:0};
+            const st = { wins:{1:0,2:0,3:0,4:0,5:0}, selfDraws:{1:0,2:0,3:0,4:0,5:0}, losses:{1:0,2:0,3:0,4:0,5:0} };
+            let dongTotal = 0;
+            state.roundHands.forEach(h => {
+                Object.keys(h.impacts).forEach(p => scores[p] += h.impacts[p]);
+                dongTotal += h.dong;
+                if (h.loserId === 'all') st.selfDraws[h.winnerId]++; else { st.wins[h.winnerId]++; st.losses[h.loserId]++; }
+            });
+            await addDoc(historyColl, { date: state.sessionDate, roundNumber: state.rounds + 1, players: state.selectedPlayerIds, scores, stats: st, dong: dongTotal, timestamp: Date.now() });
+            const snaps = await getDocs(handsColl); snaps.forEach(d => deleteDoc(d.ref));
+            updateState({ rounds: state.rounds + 1, totalDong: state.totalDong + dongTotal });
+        };
+
+        function resetForm() {
+            const winS = document.getElementById('winner-select');
+            const losS = document.getElementById('loser-select');
+            const taiI = document.getElementById('tai-input');
+            if(winS) winS.value = ""; if(losS) losS.value = ""; if(taiI) taiI.value = "";
+            state.isDiceReturn = false; state.isLeopard = false;
             updateModifierUI();
         }
 
-        function addHand() {
-            const winnerId = parseInt(document.getElementById('winner-select').value);
-            const loserVal = document.getElementById('loser-select').value;
-            const loserId = loserVal === 'all' ? 'all' : parseInt(loserVal);
-            let taiInput = parseInt(document.getElementById('tai-input').value);
-            const dealerId = state.newHand.dealerId;
-
-            if (!winnerId || !loserId || isNaN(taiInput) || !dealerId) {
-                alert("請完整選取贏家與輸家！"); return;
-            }
-
-            if (winnerId === dealerId || loserId === 'all') {
-                if (taiInput < 1) taiInput = 1;
-            }
-
-            saveHistory();
-
-            const currentN = state.consecutiveWins[dealerId] || 0;
-            const dealerBonusTai = getDealerJumpTai(currentN); 
-            const impacts = {};
-            state.selectedPlayerIds.forEach(id => impacts[id] = 0);
-            let dongAdded = 0;
-
-            const baseTaiInput = Math.abs(taiInput);
-            const diceTai = state.newHand.isDiceReturn ? 2 : 0;
-            const isWinnerEye = state.eyeWatchers.includes(winnerId);
-
-            if (loserId === 'all') {
-                dongAdded = DONG_FEE;
-                let winnerTotalGain = 0;
-                state.selectedPlayerIds.forEach(pid => {
-                    if (pid === winnerId) return;
-                    let pTai = 0;
-                    if (winnerId === dealerId || pid === dealerId) {
-                        pTai = baseTaiInput + diceTai;
-                    } else {
-                        pTai = Math.max(0, baseTaiInput - dealerBonusTai) + diceTai;
-                    }
-                    if (isWinnerEye) pTai += 1;
-                    if (state.eyeWatchers.includes(pid)) pTai += 1;
-
-                    let money = 50 + (pTai * TAI_MONEY);
-                    if (state.newHand.isLeopard) money *= 2;
-                    impacts[pid] = -money; winnerTotalGain += money;
-                });
-                impacts[winnerId] = winnerTotalGain - DONG_FEE;
-            } else {
-                let pTai = baseTaiInput + diceTai;
-                if (isWinnerEye) pTai += 1;
-                let baseMoney = 50 + (pTai * TAI_MONEY);
-                if (state.newHand.isLeopard) baseMoney *= 2;
-                impacts[winnerId] = baseMoney; impacts[loserId] = -baseMoney;
-                state.selectedPlayerIds.forEach(pid => {
-                    if (pid === winnerId || pid === loserId) return;
-                    if (state.eyeWatchers.includes(pid)) {
-                        const eyeCost = 1 * TAI_MONEY;
-                        impacts[pid] -= eyeCost; impacts[winnerId] += eyeCost;
-                    }
-                });
-            }
-
-            state.roundHands.unshift({ 
-                id: Date.now(), winnerId, loserId, tai: taiInput, dealerId, 
-                consecutiveWins: currentN, eyeWatchers: [...state.eyeWatchers],
-                isDiceReturn: state.newHand.isDiceReturn, isLeopard: state.newHand.isLeopard, impacts, dong: dongAdded 
-            });
-            
-            if (winnerId === dealerId) { 
-                state.consecutiveWins[dealerId]++; 
-            } else { 
-                state.consecutiveWins[dealerId] = 0;
-                const nextIdx = (state.selectedPlayerIds.indexOf(dealerId) + 1) % 4;
-                state.newHand.dealerId = state.selectedPlayerIds[nextIdx];
-            }
-
-            document.getElementById('winner-select').value = "";
-            document.getElementById('loser-select').value = "";
-            state.eyeWatchers = []; 
-            const nextDealerId = state.newHand.dealerId;
-            document.getElementById('consecutive-input').value = state.consecutiveWins[nextDealerId] || 0;
-            handleInputChange();
-            state.newHand.isDiceReturn = false; state.newHand.isLeopard = false;
-            renderAll();
-        }
-
-        function deleteHand(id) { 
-            saveHistory();
-            state.roundHands = state.roundHands.filter(h => h.id !== id); 
-            renderAll(); 
-        }
-
-        function finalizeRound() {
-            if (state.roundHands.length === 0) return;
-            if (!confirm("確定結束本將紀錄？數據將轉入歷史。")) return;
-            const summary = getRoundSummary();
-            const date = document.getElementById('session-date').value;
-            
-            const stats = { wins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, selfDraws: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, losses: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
-            state.roundHands.forEach(h => {
-                if (h.loserId === 'all') stats.selfDraws[h.winnerId]++;
-                else { stats.wins[h.winnerId]++; stats.losses[h.loserId]++; }
-            });
-
-            state.selectedPlayerIds.forEach(pid => state.totalScores[pid] += summary.scores[pid]);
-            state.history.unshift({ 
-                id: Date.now(), date, roundNumber: state.rounds + 1, players: [...state.selectedPlayerIds], 
-                scores: { ...summary.scores }, stats: stats, dong: summary.dongTotal, details: [...state.roundHands] 
-            });
-            state.rounds += 1; state.totalDong += summary.dongTotal; state.roundHands = []; state.newHand.dealerId = null;
-            document.getElementById('dealer-consecutive-container').classList.add('hidden');
-            state.historyStack = []; state.redoStack = []; updateUndoRedoButtons();
-            renderAll();
-        }
-
-        function getRoundSummary() {
-            const scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-            let dongTotal = 0;
-            state.roundHands.forEach(h => {
-                Object.keys(h.impacts).forEach(pid => scores[pid] += h.impacts[pid]);
-                dongTotal += h.dong;
-            });
-            return { scores, dongTotal };
-        }
-
-        function calculateSettlement() {
-            const date = document.getElementById('session-date').value;
-            const todayRecords = state.history.filter(r => r.date === date);
-            if (todayRecords.length === 0) { alert("今天尚未有紀錄！"); return; }
-            
-            const netBalances = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-            const dailyStats = { wins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, selfDraws: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, losses: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
-            let totalDongForDay = 0;
-
-            todayRecords.forEach(r => {
-                Object.keys(r.scores).forEach(pid => {
-                    netBalances[pid] += r.scores[pid];
-                    dailyStats.wins[pid] += r.stats.wins[pid];
-                    dailyStats.selfDraws[pid] += r.stats.selfDraws[pid];
-                    dailyStats.losses[pid] += r.stats.losses[pid];
-                });
-                totalDongForDay += r.dong;
-            });
-            netBalances[2] += totalDongForDay; 
-
-            document.getElementById('settle-date-label').textContent = `${date} 結帳摘要`;
-            document.getElementById('settle-balances-list').innerHTML = FIXED_PLAYERS.map(p => {
-                const bal = netBalances[p.id];
-                return `
-                <div class="text-center">
-                    <p class="text-[10px] font-black text-[#222222] mb-0.5 font-bold">${p.name}</p>
-                    <p class="text-[11px] font-black ${bal >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${bal > 0 ? '+' : ''}${bal}</p>
-                    <div class="flex flex-col text-[8px] font-bold opacity-60 mt-1">
-                        <span>胡：${dailyStats.wins[p.id]}</span>
-                        <span>摸：${dailyStats.selfDraws[p.id]}</span>
-                        <span>槍：${dailyStats.losses[p.id]}</span>
-                    </div>
-                </div>`;
-            }).join('');
-
-            const debtors = [];
-            const creditors = [];
-            Object.keys(netBalances).forEach(pid => {
-                const val = netBalances[pid];
-                if (val < 0) debtors.push({ name: FIXED_PLAYERS.find(p => p.id == pid).name, amount: Math.abs(val) });
-                else if (val > 0) creditors.push({ name: FIXED_PLAYERS.find(p => p.id == pid).name, amount: val });
-            });
-
-            const instructions = [];
-            let dIdx = 0, cIdx = 0;
-            while (dIdx < debtors.length && cIdx < creditors.length) {
-                const d = debtors[dIdx], c = creditors[cIdx];
-                const settleAmount = Math.min(d.amount, c.amount);
-                if (settleAmount > 0) instructions.push(`<div class="flex items-center justify-between bg-[#FAF3E1] p-3 rounded-lg border border-[#F5E7C6]"><span class="font-bold text-[#222222]">${d.name} 👉 <span class="text-[#FF6D1F] font-black">${c.name}</span></span><span class="font-mono font-black text-[#222222]">$${settleAmount}</span></div>`);
-                d.amount -= settleAmount; c.amount -= settleAmount;
-                if (d.amount === 0) dIdx++;
-                if (c.amount === 0) cIdx++;
-            }
-            document.getElementById('settle-instructions').innerHTML = instructions.length ? instructions.join('') : '<p class="text-center text-xs text-slate-300 italic">帳目平衡</p>';
-            lucide.createIcons();
-        }
-
-        function exportToCsv() {
-            if (state.history.length === 0) return;
-            let csv = "\ufeff日期,將數,東錢,玩家,得分,胡,摸,槍\n";
-            state.history.forEach(r => r.players.forEach(pid => {
-                csv += `${r.date},第${r.roundNumber}將,${r.dong},${FIXED_PLAYERS.find(x => x.id === pid).name},${r.scores[pid]},${r.stats.wins[pid]},${r.stats.selfDraws[pid]},${r.stats.losses[pid]}\n`;
-            }));
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-            link.download = `麻將戰績_${state.sessionDate}.csv`; link.click();
-        }
-
-        function resetData() { if (confirm('確定重置？進度將消失。')) location.reload(); }
-
+        // --- 介面渲染 ---
         function renderAll() {
-            renderStats(); renderPlayers(); renderDealer(); renderOptions(); renderSummary(); renderHands(); renderHistoryList(); renderEyeWatcherUI(); updateModifierUI();
-            document.getElementById('settlement-container').classList.toggle('hidden', state.history.length === 0);
-            updateUndoRedoButtons();
-            lucide.createIcons();
-        }
-
-        function renderStats() {
+            const sum = {1:0,2:0,3:0,4:0,5:0}, st = {w:{1:0,2:0,3:0,4:0,5:0},m:{1:0,2:0,3:0,4:0,5:0},q:{1:0,2:0,3:0,4:0,5:0}};
+            let rdDong = 0;
+            state.roundHands.forEach(h => {
+                Object.keys(h.impacts).forEach(p => sum[p] += h.impacts[p]); rdDong += h.dong;
+                if (h.loserId === 'all') st.m[h.winnerId]++; else { st.w[h.winnerId]++; st.q[h.loserId]++; }
+            });
+            
             document.getElementById('total-rounds').textContent = state.rounds;
             document.getElementById('total-dong').textContent = `$${state.totalDong}`;
-            const summary = getRoundSummary();
-            document.getElementById('round-dong-display').textContent = `$${summary.dongTotal}`;
-            state.roundHands.length > 0 ? document.getElementById('player-status-msg').classList.remove('hidden') : document.getElementById('player-status-msg').classList.add('hidden');
-        }
+            document.getElementById('round-dong-display').textContent = `$${rdDong}`;
+            document.getElementById('undo-btn').disabled = state.roundHands.length === 0;
 
-        function renderPlayers() {
-            document.getElementById('player-selection-grid').innerHTML = FIXED_PLAYERS.map(p => {
-                const sel = state.selectedPlayerIds.includes(p.id);
-                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold transition-all border-2 flex flex-col items-center justify-center ${sel ? 'bg-[#FF6D1F] border-transparent text-white shadow-md' : 'bg-white border-[#F5E7C6] text-slate-300'}"><span class="text-sm font-bold text-center">${p.name}</span></button>`;
+            const grid = document.getElementById('player-selection-grid');
+            grid.innerHTML = FIXED_PLAYERS.map(p => {
+                const s = state.selectedPlayerIds.includes(p.id);
+                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold border-2 transition-all ${s?'bg-[#FF6D1F] border-transparent text-white shadow-md':'bg-white border-[#F5E7C6] text-slate-300'}"><span>${p.name}</span></button>`;
             }).join('');
-        }
 
-        function renderDealer() {
-            document.getElementById('dealer-selection-container').innerHTML = state.selectedPlayerIds.map((pid, idx) => {
-                const act = state.newHand.dealerId === pid;
-                return `<div class="flex flex-col gap-1 text-slate-400"><span class="stat-label font-bold text-center">${SEATS[idx]}</span><button onclick="setDealer(${pid})" class="py-3.5 rounded-xl font-bold border-2 transition-all ${act ? 'bg-[#222222] border-[#222222] text-white shadow-md' : 'bg-white border-[#F5E7C6] text-slate-400'} text-base font-bold">${FIXED_PLAYERS.find(x => x.id === pid).name}</button></div>`;
+            const dealerGrid = document.getElementById('dealer-selection-container');
+            const seats = ["東","南","西","北"];
+            dealerGrid.innerHTML = state.selectedPlayerIds.map((pid, idx) => {
+                const active = state.currentDealerId === pid;
+                return `<div class="flex flex-col gap-1 text-slate-400"><span class="stat-label text-center">${seats[idx]}</span><button onclick="setDealer(${pid})" class="py-3 rounded-xl font-bold border-2 ${active?'bg-[#222222] text-white shadow-md':'bg-white border-[#F5E7C6] text-slate-400'}">${FIXED_PLAYERS.find(p=>p.id===pid).name}</button></div>`;
             }).join('');
-        }
 
-        function renderEyeWatcherUI() {
-            const grid = document.getElementById('eye-watcher-grid'); if (!grid) return;
-            grid.innerHTML = state.selectedPlayerIds.map(pid => {
-                const act = state.eyeWatchers.includes(pid);
-                return `<button onclick="toggleEyeWatcher(${pid})" class="py-2.5 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1 ${act ? 'bg-[#FF6D1F] border-transparent text-white shadow-sm' : 'bg-white border-[#F5E7C6] text-[#222222]/40'}"><i data-lucide="eye" class="w-3 h-3 ${act ? 'text-white' : 'text-slate-100'}"></i>${FIXED_PLAYERS.find(x => x.id === pid).name}</button>`;
+            const eyeGrid = document.getElementById('eye-watcher-grid');
+            if (eyeGrid) eyeGrid.innerHTML = state.selectedPlayerIds.map(pid => {
+                const active = state.eyeWatchers.includes(pid);
+                return `<button onclick="toggleEyeWatcher(${pid})" class="py-2.5 rounded-lg text-xs font-bold border ${active?'bg-[#FF6D1F] text-white':'bg-white border-[#F5E7C6] text-slate-400'}"><i data-lucide="eye" class="w-3 h-3"></i>${FIXED_PLAYERS.find(p=>p.id===pid).name}</button>`;
             }).join('');
+
+            const winS = document.getElementById('winner-select'); const losS = document.getElementById('loser-select');
+            const curW = parseInt(winS.value); const curL = losS.value;
+            const ps = FIXED_PLAYERS.filter(p=>state.selectedPlayerIds.includes(p.id));
+            winS.innerHTML = `<option value="">胡牌玩家</option>` + ps.map(p=>`<option value="${p.id}" ${curW===p.id?'selected':''}>${p.name}</option>`).join('');
+            losS.innerHTML = `<option value="">放槍玩家</option><option value="all" ${curL==='all'?'selected':''}>🌟 自摸</option>` + ps.filter(p=>p.id!==curW).map(p=>`<option value="${p.id}" ${curL==p.id?'selected':''}>${p.name}</option>`).join('');
+
+            const summary = document.getElementById('current-summary-grid');
+            summary.innerHTML = state.selectedPlayerIds.map(pid => {
+                const p = FIXED_PLAYERS.find(x => x.id === pid);
+                return `<div class="bg-white p-3 rounded-2xl border-2 border-[#F5E7C6] shadow-sm"><p class="text-xs font-bold text-slate-800 font-bold mb-1">${p.name}</p><p class="text-lg font-black ${sum[pid]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${sum[pid]>0?'+':''}${sum[pid]}</p><div class="flex flex-col text-[8px] font-bold opacity-30 mt-1"><span>胡:${st.w[pid]} / 摸:${st.m[pid]} / 槍:${st.q[pid]}</span></div></div>`;
+            }).join('');
+
+            const list = document.getElementById('hands-list');
+            if(state.roundHands.length===0) list.innerHTML = `<p class="py-6 text-slate-300 italic text-xs text-center">尚未有小局紀錄...</p>`;
+            else list.innerHTML = state.roundHands.map(h => {
+                let detail = h.loserId==='all' ? `<p class="text-[9px] opacity-50 italic">(${state.selectedPlayerIds.filter(pid=>pid!==h.winnerId).map(pid=>FIXED_PLAYERS.find(p=>p.id===pid).name+":"+h.impacts[pid]).join(' / ')})</p>` : "";
+                return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center"><div class="text-left"><div class="flex items-center gap-2"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊:${FIXED_PLAYERS.find(p=>p.id===h.dealerId).name}(${h.consecutiveWins})</span><span class="font-bold text-[#FF6D1F]">${FIXED_PLAYERS.find(p=>p.id===h.winnerId).name}</span><span class="text-xs">${h.loserId==='all'?'自摸':'胡'+FIXED_PLAYERS.find(p=>p.id===h.loserId).name} ${h.tai}台</span></div>${detail}</div><div class="font-mono font-black ${h.impacts[h.winnerId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.impacts[h.winnerId]>0?'+':''}${h.impacts[h.winnerId]}</div></div>`;
+            }).join('');
+
+            const his = document.getElementById('history-list');
+            if(state.history.length===0) his.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border-2 border-[#F5E7C6] text-slate-300 italic text-sm">檔案紀錄為空</div>`;
+            else {
+                his.innerHTML = state.history.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center"><span class="text-[10px] font-black opacity-50">第 ${r.roundNumber} 將 • ${r.date}</span><span class="text-[10px] font-black text-[#FF6D1F]">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center">${r.players.map(pid => `<div><p class="text-[9px] opacity-40">${FIXED_PLAYERS.find(p=>p.id===pid).name}</p><p class="text-xs font-black ${r.scores[pid]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[pid]}</p></div>`).join('')}</div></div>`).join('');
+                document.getElementById('settlement-container').classList.remove('hidden');
+            }
             lucide.createIcons();
         }
 
-        function renderOptions() {
-            const winS = document.getElementById('winner-select'); const losS = document.getElementById('loser-select');
-            const selPs = FIXED_PLAYERS.filter(p => state.selectedPlayerIds.includes(p.id));
-            const curWin = parseInt(winS.value); const curLos = losS.value;
-            winS.innerHTML = `<option value=""> </option>` + selPs.map(p => `<option value="${p.id}" ${curWin === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
-            losS.innerHTML = `<option value=""> </option><option value="all" ${curLos === 'all' ? 'selected' : ''}>🌟 自摸</option>` + selPs.filter(p => p.id !== parseInt(winS.value)).map(p => `<option value="${p.id}" ${losS.value == p.id ? 'selected' : ''}>${p.name}</option>`).join('');
-        }
+        window.handleInputChange = () => {
+            const winId = parseInt(document.getElementById('winner-select').value);
+            const losVal = document.getElementById('loser-select').value;
+            const input = document.getElementById('tai-input');
+            if (!state.currentDealerId) return;
+            if (winId === state.currentDealerId || (losVal !== 'all' && parseInt(losVal) === state.currentDealerId)) {
+                const n = state.consecutiveWins[state.currentDealerId] || 0;
+                input.value = (n === 0 ? 1 : 2 * n + 1);
+            } else if (losVal === 'all') input.value = 1; else input.value = 0;
+        };
 
-        function renderSummary() {
-            const summary = getRoundSummary();
-            const stats = { wins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, selfDraws: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, losses: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
-            state.roundHands.forEach(h => {
-                if (h.loserId === 'all') stats.selfDraws[h.winnerId]++;
-                else { stats.wins[h.winnerId]++; stats.losses[h.loserId]++; }
-            });
-
-            document.getElementById('current-summary-grid').innerHTML = state.selectedPlayerIds.map(pid => {
-                const p = FIXED_PLAYERS.find(x => x.id === pid);
-                const score = summary.scores[pid];
-                return `
-                <div class="text-center p-3.5 bg-white rounded-2xl border-2 border-[#F5E7C6] shadow flex flex-col items-center">
-                    <p class="text-base font-black text-[#222222] mb-1 font-bold text-center">${p.name}</p>
-                    <p class="text-xl font-black ${score >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${score > 0 ? '+' : ''}${score}</p>
-                    <div class="flex flex-col gap-0.5 mt-2 w-full text-[11px] font-bold text-[#222222]">
-                        <span class="bg-[#FF6D1F]/5 text-[#FF6D1F] py-0.5 rounded w-full border border-[#FF6D1F]/10">胡：${stats.wins[pid]}</span>
-                        <span class="bg-slate-50 text-[#222222] py-0.5 rounded w-full border border-[#F5E7C6]">摸：${stats.selfDraws[pid]}</span>
-                        <span class="bg-[#222222]/5 text-[#222222] py-0.5 rounded w-full border border-[#222222]/10 opacity-40">槍：${stats.losses[pid]}</span>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function renderHands() {
-            const list = document.getElementById('hands-list');
-            if (state.roundHands.length === 0) { list.innerHTML = `<p class="text-center py-6 text-slate-300 italic text-xs text-[#222222]">尚未有紀錄...</p>`; return; }
-            list.innerHTML = state.roundHands.map(h => {
-                const eyeNames = h.eyeWatchers.map(id => FIXED_PLAYERS.find(x => x.id === id).name).join(', ');
-                let detailDisplay = "";
-                if (h.loserId === 'all') {
-                    const others = state.selectedPlayerIds.filter(pid => pid !== h.winnerId);
-                    const detailStr = others.map(pid => {
-                        const pName = FIXED_PLAYERS.find(p => p.id === pid).name;
-                        return `${pName}：${h.impacts[pid]}`;
-                    }).join(' / ') + ` / 東錢：${h.dong}`;
-                    detailDisplay = `<p class="text-[10px] font-bold opacity-70 mt-1 tracking-tight">(${detailStr})</p>`;
-                }
-
-                return `
-                <div class="flex flex-col p-4 bg-white rounded-xl border border-[#F5E7C6] group shadow-sm transition-all text-left">
-                    <div class="flex items-center justify-between">
-                        <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-[#222222] text-white px-2 py-0.5 rounded text-[9px] font-bold">莊：${FIXED_PLAYERS.find(x => x.id === h.dealerId).name}(${h.consecutiveWins})</span>
-                                <span class="font-black text-[#FF6D1F] text-sm">${FIXED_PLAYERS.find(x => x.id === h.winnerId).name}</span>
-                            </div>
-                            <div class="mt-1 text-left">
-                                <span class="text-slate-500 text-xs font-bold">${h.loserId === 'all' ? '自摸' : '胡' + FIXED_PLAYERS.find(x => x.id === h.loserId).name} ${h.tai}台</span>
-                                ${h.isDiceReturn ? '<span class="text-[#FF6D1F] font-bold bg-[#FF6D1F]/10 px-1 rounded ml-1 text-[10px]">骰規</span>' : ''}
-                                ${h.isLeopard ? '<span class="text-[#222222] font-bold bg-[#222222]/10 px-1 rounded ml-1 text-[10px]">豹子</span>' : ''}
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-mono font-black text-base ${h.impacts[h.winnerId] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${h.impacts[h.winnerId] > 0 ? '+' : ''}${h.impacts[h.winnerId]}</span>
-                            <button onclick="deleteHand(${h.id})" class="text-slate-300 p-1 hover:text-[#222222] transition-colors"><i data-lucide="trash-2" class="w-4 h-4 text-center"></i></button>
-                        </div>
-                    </div>
-                    ${detailDisplay}
-                    ${h.eyeWatchers.length > 0 ? `<div class="mt-2 text-[10px] font-bold text-[#FF6D1F] border-t border-[#FAF3E1] pt-1 tracking-tight italic">👁️ 眼牌：${eyeNames}</div>` : ''}
-                </div>`;
-            }).join(''); lucide.createIcons();
-        }
-
-        function renderHistoryList() {
-            const list = document.getElementById('history-list');
-            if (state.history.length === 0) { list.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border-2 border-[#F5E7C6] text-slate-300 italic text-sm text-[#222222]">歷史為空</div>`; return; }
-            list.innerHTML = state.history.map(record => `
-                <div class="bg-white rounded-2xl shadow border-2 border-[#F5E7C6] overflow-hidden text-[#222222] text-left">
-                    <div class="bg-[#FAF3E1] px-4 py-3 border-b border-[#F5E7C6] flex justify-between items-center text-left">
-                        <span class="font-black text-slate-600 text-[10px] uppercase">第 ${record.roundNumber} 將 • ${record.date}</span>
-                        <span class="text-[11px] text-[#FF6D1F] font-black bg-white px-3 py-1 rounded-full border border-[#F5E7C6] shadow-sm">$${record.dong}</span>
-                    </div>
-                    <div class="p-4">
-                        <div class="grid grid-cols-4 gap-2 text-center">
-                            ${record.players.map(pid => `
-                                <div class="text-center flex flex-col items-center text-[#222222]">
-                                    <p class="text-[10px] font-black text-[#222222]/60 mb-1 uppercase">${FIXED_PLAYERS.find(p => p.id === pid).name}</p>
-                                    <p class="text-lg font-black ${record.scores[pid] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${record.scores[pid] > 0 ? '+' : ''}${record.scores[pid]}</p>
-                                    <div class="mt-2 flex flex-col gap-0.5 w-full text-[9px] font-bold text-slate-400 text-center">
-                                        <span>胡：${record.stats.wins[pid]}</span>
-                                        <span>摸：${record.stats.selfDraws[pid]}</span>
-                                        <span>槍：${record.stats.losses[pid]}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>`).join('');
-        }
+        window.toggleModifier = (type) => {
+            if(type==='dice') { state.isDiceReturn = !state.isDiceReturn; state.isLeopard = false; }
+            else { state.isLeopard = !state.isLeopard; state.isDiceReturn = false; }
+            updateModifierUI();
+        };
 
         function updateModifierUI() {
-            const dice = document.getElementById('btn-dice'); const leo = document.getElementById('btn-leopard');
-            dice.className = state.newHand.isDiceReturn ? "p-4 rounded-xl border-2 transition-all bg-[#FF6D1F] border-transparent text-white shadow-md" : "p-4 rounded-xl border-2 transition-all border-[#F5E7C6] bg-white text-slate-200";
-            leo.className = state.newHand.isLeopard ? "p-4 rounded-xl border-2 transition-all bg-[#222222] border-transparent text-white shadow-md" : "p-4 rounded-xl border-2 transition-all border-[#F5E7C6] bg-white text-slate-200";
-            lucide.createIcons();
+            document.getElementById('btn-dice').className = state.isDiceReturn ? "p-3.5 rounded-xl border-2 bg-[#FF6D1F] text-white" : "p-3.5 rounded-xl border-2 bg-white text-slate-100";
+            document.getElementById('btn-leopard').className = state.isLeopard ? "p-3.5 rounded-xl border-2 bg-[#222222] text-white" : "p-3.5 rounded-xl border-2 bg-white text-slate-100";
         }
+
+        window.calculateSettlement = () => {
+            const today = state.history.filter(r => r.date === state.sessionDate);
+            const net = {1:0,2:0,3:0,4:0,5:0};
+            let dongTotal = today.reduce((a, b) => a + (b.dong || 0), 0);
+            today.forEach(r => Object.keys(r.scores).forEach(p => net[p] += r.scores[p])); net[2] += dongTotal;
+            document.getElementById('settle-date-label').textContent = `${state.sessionDate} 結帳統計`;
+            document.getElementById('settle-balances-list').innerHTML = FIXED_PLAYERS.map(p => `<div class="text-center"><p class="text-[9px] font-bold opacity-40">${p.name}</p><p class="text-xs font-black ${net[p.id]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${net[p.id]}</p></div>`).join('');
+            const deb = [], cre = [];
+            Object.keys(net).forEach(p => { if(net[p]<0) deb.push({n:FIXED_PLAYERS.find(x=>x.id==p).name,a:Math.abs(net[p])}); else if(net[p]>0) cre.push({n:FIXED_PLAYERS.find(x=>x.id==p).name,a:net[p]}); });
+            const ins = []; let dI=0, cI=0;
+            while(dI < deb.length && cI < cre.length) {
+                let s = Math.min(deb[dI].a, cre[cI].a); ins.push(`<div class="flex justify-between bg-[#FAF3E1] p-3 rounded-lg border border-[#F5E7C6] text-xs"><span class="font-bold text-[#222222]">${deb[dI].n} 👉 <span class="text-[#FF6D1F]">${cre[cI].n}</span></span><span class="font-black">$${s}</span></div>`);
+                deb[dI].a -= s; cre[cI].a -= s; if(deb[dI].a===0) dI++; if(cre[cI].a===0) cI++;
+            }
+            document.getElementById('settle-instructions').innerHTML = ins.length ? ins.join('') : '<p class="text-center text-xs opacity-20 italic">帳目平衡</p>';
+        };
+
+        window.exportToCsv = () => {
+            let csv = "\ufeff日期,將數,東錢,玩家,得分\n";
+            state.history.forEach(r => r.players.forEach(p => csv += `${r.date},第${r.roundNumber}將,${r.dong},${FIXED_PLAYERS.find(x=>x.id===p).name},${r.scores[p]}\n`));
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})); link.download = `雲端戰績_${state.sessionDate}.csv`; link.click();
+        };
+
+        window.resetData = async () => {
+            if(!confirm('這會重置雲端資料庫（所有人手機都會清空），確定？')) return;
+            await setDoc(globalRef, { sessionDate: state.sessionDate, selectedPlayerIds:[1,2,3,4], consecutiveWins:{1:0,2:0,3:0,4:0,5:0}, rounds:0, totalDong:0, currentDealerId:null, eyeWatchers:[] });
+            const hs = await getDocs(handsColl); hs.forEach(d => deleteDoc(d.ref));
+            const his = await getDocs(historyColl); his.forEach(d => deleteDoc(d.ref));
+            const re = await getDocs(redoColl); re.forEach(d => deleteDoc(d.ref));
+            location.reload();
+        };
+
+        init();
     </script>
 </body>
 </html>
