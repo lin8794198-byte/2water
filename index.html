@@ -39,24 +39,25 @@
         
         .card-shadow { box-shadow: 0 4px 12px rgba(34, 34, 34, 0.05); }
 
-        /* 復原按鈕動畫 */
+        /* 按鈕動畫 */
         .undo-btn:active { transform: rotate(-45deg) scale(0.9); }
+        .redo-btn:active { transform: rotate(45deg) scale(0.9); }
     </style>
 </head>
-<body class="min-h-screen p-2 md:p-6 text-[#222222] pb-24">
+<body class="min-h-screen p-2 md:p-6 text-[#222222] pb-24 text-center">
 
     <div class="max-w-4xl mx-auto space-y-4">
         <!-- Header -->
         <div class="bg-[#222222] p-5 rounded-2xl text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center justify-center space-x-3 text-white">
                 <div class="bg-white/10 p-2 rounded-xl border border-white/10">
                     <i data-lucide="trophy" class="w-6 h-6 text-[#FF6D1F]"></i>
                 </div>
-                <h1 class="font-black tracking-tight title-main text-white text-center">麻將大師群</h1>
+                <h1 class="font-black tracking-tight title-main text-white">麻將大師群</h1>
             </div>
             <div class="flex space-x-2">
                 <button onclick="exportToCsv()" class="bg-[#FF6D1F] hover:opacity-90 px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-bold text-xs text-white shadow-sm">
-                    <i data-lucide="download" class="w-4 h-4"></i> 匯出 CSV
+                    <i data-lucide="download" class="w-4 h-4 text-white"></i> 匯出 CSV
                 </button>
                 <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all text-white">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
@@ -84,7 +85,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
             <div class="lg:col-span-7 space-y-6">
                 <!-- 1. Player Selection -->
                 <div class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] card-shadow">
@@ -94,7 +95,7 @@
                         </h2>
                         <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic">對局進行中，鎖定玩家</span>
                     </div>
-                    <div id="player-selection-grid" class="grid grid-cols-5 gap-2 text-center"></div>
+                    <div id="player-selection-grid" class="grid grid-cols-5 gap-2"></div>
                 </div>
 
                 <!-- 2. Record a Hand -->
@@ -157,11 +158,15 @@
                         <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 font-bold">
                             <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#FF6D1F]"></i> 3. 即時計分
                         </h2>
-                        <!-- 復原圖示 -->
-                        <button onclick="undoAction()" id="undo-btn" title="回到上一步" class="undo-btn flex items-center gap-1 px-3 py-1.5 bg-[#FAF3E1] border border-[#F5E7C6] rounded-lg text-[#222222]/40 hover:text-[#FF6D1F] hover:border-[#FF6D1F] transition-all disabled:opacity-20 disabled:pointer-events-none" disabled>
-                            <i data-lucide="undo-2" class="w-4 h-4"></i>
-                            <span class="text-[10px] font-black uppercase">上一步</span>
-                        </button>
+                        <!-- 復原與重做按鈕組 -->
+                        <div class="flex items-center gap-1">
+                            <button onclick="undoAction()" id="undo-btn" title="上一步" class="undo-btn flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] hover:border-[#FF6D1F] transition-all disabled:opacity-20 disabled:pointer-events-none" disabled>
+                                <i data-lucide="undo-2" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="redoAction()" id="redo-btn" title="下一步" class="redo-btn flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] hover:border-[#FF6D1F] transition-all disabled:opacity-20 disabled:pointer-events-none" disabled>
+                                <i data-lucide="redo-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
                     <div id="current-summary-grid" class="grid grid-cols-4 gap-2 mb-6 text-center"></div>
                     <div id="hands-list" class="space-y-2 max-h-[500px] overflow-y-auto mb-6 pr-1 custom-scrollbar"></div>
@@ -181,14 +186,14 @@
             </div>
 
             <!-- History Panel -->
-            <div class="lg:col-span-5 space-y-4">
+            <div class="lg:col-span-5 space-y-4 text-left">
                 <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2 text-black">
                     <i data-lucide="history" class="w-4 h-4 text-[#FF6D1F]"></i> 歷史紀錄
                 </h2>
                 <div id="history-list" class="space-y-4 max-h-[1400px] overflow-y-auto pr-1 pb-4 custom-scrollbar"></div>
                 
                 <div id="settlement-container" class="space-y-4 hidden">
-                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95">
+                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95 text-white">
                         <i data-lucide="wallet" class="w-5 h-5 text-white"></i> 當日統一結帳
                     </button>
                     <div id="settlement-result" class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] shadow-lg space-y-4 transition-all">
@@ -196,7 +201,7 @@
                             <span class="text-xs font-black text-[#FF6D1F] uppercase tracking-widest">建議匯款方案</span>
                             <span id="settle-date-label" class="text-[10px] font-bold text-slate-400"></span>
                         </div>
-                        <div id="settle-balances-list" class="grid grid-cols-5 gap-1 border-b border-[#FAF3E1] pb-3 text-center"></div>
+                        <div id="settle-balances-list" class="grid grid-cols-5 gap-1 border-b border-[#FAF3E1] pb-3 text-center text-[#222222]"></div>
                         <div id="settle-instructions" class="space-y-2"></div>
                     </div>
                 </div>
@@ -225,7 +230,8 @@
             roundHands: [],
             history: [],
             newHand: { dealerId: null, isDiceReturn: false, isLeopard: false },
-            historyStack: [] // 存放備份
+            historyStack: [],
+            redoStack: []
         };
 
         window.onload = () => {
@@ -233,9 +239,9 @@
             renderAll();
         };
 
-        // 保存當前狀態到 History Stack
-        function saveHistory() {
-            const snapshot = JSON.stringify({
+        // 目前狀態備份
+        function takeSnapshot() {
+            return JSON.stringify({
                 roundHands: state.roundHands,
                 consecutiveWins: state.consecutiveWins,
                 totalScores: state.totalScores,
@@ -243,24 +249,47 @@
                 rounds: state.rounds,
                 dealerId: state.newHand.dealerId
             });
-            state.historyStack.push(snapshot);
-            if (state.historyStack.length > 20) state.historyStack.shift();
-            document.getElementById('undo-btn').disabled = false;
         }
 
-        // 復原動作
+        // 保存到歷史棧，並清空重做棧
+        function saveHistory() {
+            state.historyStack.push(takeSnapshot());
+            state.redoStack = []; // 只要有新動作，就不能重做
+            if (state.historyStack.length > 30) state.historyStack.shift();
+            updateUndoRedoButtons();
+        }
+
+        // 復原
         function undoAction() {
             if (state.historyStack.length === 0) return;
+            state.redoStack.push(takeSnapshot()); // 把當前狀態存入重做棧
             const prev = JSON.parse(state.historyStack.pop());
-            state.roundHands = prev.roundHands;
-            state.consecutiveWins = prev.consecutiveWins;
-            state.totalScores = prev.totalScores;
-            state.totalDong = prev.totalDong;
-            state.rounds = prev.rounds;
-            state.newHand.dealerId = prev.dealerId;
-            
-            if (state.historyStack.length === 0) document.getElementById('undo-btn').disabled = true;
+            applySnapshot(prev);
             renderAll();
+        }
+
+        // 重做
+        function redoAction() {
+            if (state.redoStack.length === 0) return;
+            state.historyStack.push(takeSnapshot()); // 把當前狀態存入歷史棧
+            const next = JSON.parse(state.redoStack.pop());
+            applySnapshot(next);
+            renderAll();
+        }
+
+        function applySnapshot(snap) {
+            state.roundHands = snap.roundHands;
+            state.consecutiveWins = snap.consecutiveWins;
+            state.totalScores = snap.totalScores;
+            state.totalDong = snap.totalDong;
+            state.rounds = snap.rounds;
+            state.newHand.dealerId = snap.dealerId;
+            updateUndoRedoButtons();
+        }
+
+        function updateUndoRedoButtons() {
+            document.getElementById('undo-btn').disabled = state.historyStack.length === 0;
+            document.getElementById('redo-btn').disabled = state.redoStack.length === 0;
         }
 
         function togglePlayer(id) {
@@ -312,7 +341,7 @@
         }
 
         function setDealer(id) { 
-            saveHistory(); // 變更莊家也算一個動作
+            saveHistory();
             state.newHand.dealerId = id; 
             document.getElementById('dealer-consecutive-container').classList.remove('hidden');
             const n = state.consecutiveWins[id] || 0;
@@ -335,14 +364,14 @@
             const dealerId = state.newHand.dealerId;
 
             if (!winnerId || !loserId || isNaN(taiInput) || !dealerId) {
-                alert("請選取贏家與輸家！"); return;
+                alert("請完整選取贏家與輸家！"); return;
             }
 
             if (winnerId === dealerId || loserId === 'all') {
                 if (taiInput < 1) taiInput = 1;
             }
 
-            saveHistory(); // 在修改任何數據前先備份
+            saveHistory();
 
             const currentN = state.consecutiveWins[dealerId] || 0;
             const dealerBonusTai = getDealerJumpTai(currentN); 
@@ -359,14 +388,12 @@
                 let winnerTotalGain = 0;
                 state.selectedPlayerIds.forEach(pid => {
                     if (pid === winnerId) return;
-                    
                     let pTai = 0;
                     if (winnerId === dealerId || pid === dealerId) {
                         pTai = baseTaiInput + diceTai;
                     } else {
                         pTai = Math.max(0, baseTaiInput - dealerBonusTai) + diceTai;
                     }
-                    
                     if (isWinnerEye) pTai += 1;
                     if (state.eyeWatchers.includes(pid)) pTai += 1;
 
@@ -378,11 +405,9 @@
             } else {
                 let pTai = baseTaiInput + diceTai;
                 if (isWinnerEye) pTai += 1;
-                
                 let baseMoney = 50 + (pTai * TAI_MONEY);
                 if (state.newHand.isLeopard) baseMoney *= 2;
                 impacts[winnerId] = baseMoney; impacts[loserId] = -baseMoney;
-
                 state.selectedPlayerIds.forEach(pid => {
                     if (pid === winnerId || pid === loserId) return;
                     if (state.eyeWatchers.includes(pid)) {
@@ -417,14 +442,14 @@
         }
 
         function deleteHand(id) { 
-            saveHistory(); // 刪除前備份
+            saveHistory();
             state.roundHands = state.roundHands.filter(h => h.id !== id); 
             renderAll(); 
         }
 
         function finalizeRound() {
             if (state.roundHands.length === 0) return;
-            if (!confirm("確定結束本將紀錄？數據將轉入歷史紀錄。")) return;
+            if (!confirm("確定結束本將紀錄？數據將轉入歷史。")) return;
             const summary = getRoundSummary();
             const date = document.getElementById('session-date').value;
             
@@ -441,7 +466,7 @@
             });
             state.rounds += 1; state.totalDong += summary.dongTotal; state.roundHands = []; state.newHand.dealerId = null;
             document.getElementById('dealer-consecutive-container').classList.add('hidden');
-            state.historyStack = []; // 存檔後清空復原棧
+            state.historyStack = []; state.redoStack = []; updateUndoRedoButtons();
             renderAll();
         }
 
@@ -480,9 +505,9 @@
                 const bal = netBalances[p.id];
                 return `
                 <div class="text-center">
-                    <p class="text-[10px] font-black text-[#222222] mb-0.5">${p.name}</p>
+                    <p class="text-[10px] font-black text-[#222222] mb-0.5 font-bold">${p.name}</p>
                     <p class="text-[11px] font-black ${bal >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${bal > 0 ? '+' : ''}${bal}</p>
-                    <div class="flex flex-col text-[8px] font-bold opacity-60 mt-1 text-[#222222]">
+                    <div class="flex flex-col text-[8px] font-bold opacity-60 mt-1">
                         <span>胡：${dailyStats.wins[p.id]}</span>
                         <span>摸：${dailyStats.selfDraws[p.id]}</span>
                         <span>槍：${dailyStats.losses[p.id]}</span>
@@ -523,11 +548,12 @@
             link.download = `麻將戰績_${state.sessionDate}.csv`; link.click();
         }
 
-        function resetData() { if (confirm('確定重置？所有進度將消失。')) location.reload(); }
+        function resetData() { if (confirm('確定重置？進度將消失。')) location.reload(); }
 
         function renderAll() {
             renderStats(); renderPlayers(); renderDealer(); renderOptions(); renderSummary(); renderHands(); renderHistoryList(); renderEyeWatcherUI(); updateModifierUI();
             document.getElementById('settlement-container').classList.toggle('hidden', state.history.length === 0);
+            updateUndoRedoButtons();
             lucide.createIcons();
         }
 
@@ -571,8 +597,8 @@
         }
 
         function renderSummary() {
-            const stats = { wins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, selfDraws: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, losses: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
             const summary = getRoundSummary();
+            const stats = { wins: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, selfDraws: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, losses: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
             state.roundHands.forEach(h => {
                 if (h.loserId === 'all') stats.selfDraws[h.winnerId]++;
                 else { stats.wins[h.winnerId]++; stats.losses[h.loserId]++; }
@@ -596,7 +622,7 @@
 
         function renderHands() {
             const list = document.getElementById('hands-list');
-            if (state.roundHands.length === 0) { list.innerHTML = `<p class="text-center py-6 text-slate-300 italic text-sm">尚未有小局紀錄...</p>`; return; }
+            if (state.roundHands.length === 0) { list.innerHTML = `<p class="text-center py-6 text-slate-300 italic text-xs text-[#222222]">尚未有紀錄...</p>`; return; }
             list.innerHTML = state.roundHands.map(h => {
                 const eyeNames = h.eyeWatchers.map(id => FIXED_PLAYERS.find(x => x.id === id).name).join(', ');
                 let detailDisplay = "";
@@ -617,7 +643,7 @@
                                 <span class="bg-[#222222] text-white px-2 py-0.5 rounded text-[9px] font-bold">莊：${FIXED_PLAYERS.find(x => x.id === h.dealerId).name}(${h.consecutiveWins})</span>
                                 <span class="font-black text-[#FF6D1F] text-sm">${FIXED_PLAYERS.find(x => x.id === h.winnerId).name}</span>
                             </div>
-                            <div class="mt-1">
+                            <div class="mt-1 text-left">
                                 <span class="text-slate-500 text-xs font-bold">${h.loserId === 'all' ? '自摸' : '胡' + FIXED_PLAYERS.find(x => x.id === h.loserId).name} ${h.tai}台</span>
                                 ${h.isDiceReturn ? '<span class="text-[#FF6D1F] font-bold bg-[#FF6D1F]/10 px-1 rounded ml-1 text-[10px]">骰規</span>' : ''}
                                 ${h.isLeopard ? '<span class="text-[#222222] font-bold bg-[#222222]/10 px-1 rounded ml-1 text-[10px]">豹子</span>' : ''}
@@ -625,7 +651,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="font-mono font-black text-base ${h.impacts[h.winnerId] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${h.impacts[h.winnerId] > 0 ? '+' : ''}${h.impacts[h.winnerId]}</span>
-                            <button onclick="deleteHand(${h.id})" class="text-slate-300 p-1 hover:text-[#222222] transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <button onclick="deleteHand(${h.id})" class="text-slate-300 p-1 hover:text-[#222222] transition-colors"><i data-lucide="trash-2" class="w-4 h-4 text-center"></i></button>
                         </div>
                     </div>
                     ${detailDisplay}
@@ -636,17 +662,17 @@
 
         function renderHistoryList() {
             const list = document.getElementById('history-list');
-            if (state.history.length === 0) { list.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border-2 border-[#F5E7C6] text-slate-300 italic text-sm">檔案為空</div>`; return; }
+            if (state.history.length === 0) { list.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border-2 border-[#F5E7C6] text-slate-300 italic text-sm text-[#222222]">歷史為空</div>`; return; }
             list.innerHTML = state.history.map(record => `
-                <div class="bg-white rounded-2xl shadow border-2 border-[#F5E7C6] overflow-hidden text-[#222222]">
+                <div class="bg-white rounded-2xl shadow border-2 border-[#F5E7C6] overflow-hidden text-[#222222] text-left">
                     <div class="bg-[#FAF3E1] px-4 py-3 border-b border-[#F5E7C6] flex justify-between items-center text-left">
                         <span class="font-black text-slate-600 text-[10px] uppercase">第 ${record.roundNumber} 將 • ${record.date}</span>
                         <span class="text-[11px] text-[#FF6D1F] font-black bg-white px-3 py-1 rounded-full border border-[#F5E7C6] shadow-sm">$${record.dong}</span>
                     </div>
                     <div class="p-4">
-                        <div class="grid grid-cols-4 gap-2">
+                        <div class="grid grid-cols-4 gap-2 text-center">
                             ${record.players.map(pid => `
-                                <div class="text-center flex flex-col items-center">
+                                <div class="text-center flex flex-col items-center text-[#222222]">
                                     <p class="text-[10px] font-black text-[#222222]/60 mb-1 uppercase">${FIXED_PLAYERS.find(p => p.id === pid).name}</p>
                                     <p class="text-lg font-black ${record.scores[pid] >= 0 ? 'text-[#FF6D1F]' : 'text-[#222222]'}">${record.scores[pid] > 0 ? '+' : ''}${record.scores[pid]}</p>
                                     <div class="mt-2 flex flex-col gap-0.5 w-full text-[9px] font-bold text-slate-400 text-center">
