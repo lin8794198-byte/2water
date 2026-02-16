@@ -86,14 +86,14 @@
 
     <div class="max-w-4xl mx-auto space-y-4">
         <!-- Header -->
-        <div class="bg-[#222222] p-5 rounded-2xl text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 text-center">
-            <div class="flex items-center justify-center space-x-3 text-white">
+        <div class="bg-[#222222] p-5 rounded-2xl text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 text-center text-white">
+            <div class="flex items-center justify-center space-x-3">
                 <div class="bg-white/10 p-2 rounded-xl border border-white/10">
                     <i data-lucide="cloud-lightning" class="w-6 h-6 text-[#FF6D1F]"></i>
                 </div>
-                <div class="text-left text-white">
+                <div class="text-left">
                     <h1 class="font-black tracking-tight text-xl">麻將大師群</h1>
-                    <p class="text-[8px] opacity-40 uppercase tracking-widest text-white">Real-time Cloud Sync</p>
+                    <p class="text-[8px] opacity-40 uppercase tracking-widest">Real-time Cloud Sync</p>
                 </div>
             </div>
             <div class="flex space-x-2">
@@ -101,7 +101,7 @@
                     <i data-lucide="download" class="w-4 h-4 text-white"></i> 匯出 CSV
                 </button>
                 <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all text-white">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-white"></i>
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
@@ -211,7 +211,7 @@
                 <div id="settlement-container" class="space-y-4 hidden text-[#222222]">
                     <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] text-white py-4 rounded-xl font-black shadow-xl border-b-4 border-black/10 transition-all active:scale-95 font-bold"><i data-lucide="wallet" class="w-5 h-5 text-white"></i> 當日統一結帳</button>
                     <div id="settlement-result" class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] shadow-lg space-y-4 transition-all">
-                        <div class="flex items-center justify-between border-b border-[#FAF3E1] pb-2 font-bold"><span class="text-xs font-black text-[#FF6D1F]">建議匯款方案</span><span id="settle-date-label" class="text-[10px] font-bold text-slate-400"></span></div>
+                        <div class="flex items-center justify-between border-b border-[#FAF3E1] pb-2 font-bold text-[#222222]"><span class="text-xs font-black text-[#FF6D1F]">建議匯款方案</span><span id="settle-date-label" class="text-[10px] font-bold text-slate-400"></span></div>
                         <div id="settle-balances-list" class="grid grid-cols-5 gap-1 border-b border-[#FAF3E1] pb-3 text-center text-[#222222]"></div>
                         <div id="settle-instructions" class="space-y-2"></div>
                     </div>
@@ -383,7 +383,7 @@
             const last = state.roundHands[0];
             await addDoc(redoColl, {...last, ts: Date.now()});
             await deleteDoc(doc(handsColl, last.id));
-            let wins = {...state.consecutiveWins}; wins[last.dealerId] = last.n;
+            let wins = {...state.consecutiveWins}; wins[last.dealerId] = last.consecutiveWins;
             updateState({ consecutiveWins: wins, currentDealerId: last.dealerId, eyeWatchers: last.eyes });
         };
 
@@ -396,9 +396,15 @@
             await deleteDoc(snap.docs[0].ref);
         };
 
+        window.deleteHand = async (id) => {
+            if (!auth.currentUser) return;
+            if (!confirm("確定要刪除這筆紀錄嗎？")) return;
+            await deleteDoc(doc(handsColl, id)).catch(e => console.error(e));
+        };
+
         window.finalizeRound = async () => {
             if (state.roundHands.length === 0 || !auth.currentUser) return;
-            if (!confirm("結算本將？資料將轉入歷史並清空桌面。")) return;
+            if (!confirm("確定結算本將？資料將轉入歷史並清空桌面。")) return;
             const sc = {1:0,2:0,3:0,4:0,5:0}, st = { wins:{1:0,2:0,3:0,4:0,5:0}, selfDraws:{1:0,2:0,3:0,4:0,5:0}, losses:{1:0,2:0,3:0,4:0,5:0} };
             let dTot = 0;
             state.roundHands.forEach(h => { Object.keys(h.imp).forEach(p => sc[p] += h.imp[p]); dTot += h.dong; if (h.losId === 'all') st.selfDraws[h.winId]++; else { st.wins[h.winId]++; st.losses[h.losId]++; } });
@@ -425,7 +431,7 @@
             const sts = ["東","南","西","北"];
             document.getElementById('dealer-selection-container').innerHTML = state.selectedPlayerIds.map((p,i) => {
                 const act = state.currentDealerId === p;
-                return `<div class="flex flex-col gap-1 text-slate-400"><span class="stat-label text-center font-bold">${sts[i]}</span><button onclick="setDealer(${p})" class="py-3 rounded-xl font-bold border-2 transition-all ${act?'bg-[#222222] border-[#222222] text-white shadow-md':'bg-white border-[#F5E7C6] text-slate-400'}">${getPlayerName(p)}</button></div>`;
+                return `<div class="flex flex-col gap-1 text-slate-400"><span class="stat-label text-center font-bold text-[#222222]/60">${sts[i]}</span><button onclick="setDealer(${p})" class="py-3 rounded-xl font-bold border-2 transition-all ${act?'bg-[#222222] border-[#222222] text-white shadow-md':'bg-white border-[#F5E7C6] text-slate-400'}">${getPlayerName(p)}</button></div>`;
             }).join('');
             if(state.currentDealerId) document.getElementById('dealer-consecutive-container').classList.remove('hidden');
 
@@ -442,11 +448,11 @@
             document.getElementById('current-summary-grid').innerHTML = state.selectedPlayerIds.map(p => `<div class="bg-white p-3 rounded-2xl border-2 border-[#F5E7C6] shadow-sm font-bold"><p class="text-xs text-slate-800 mb-1">${getPlayerName(p)}</p><p class="text-lg ${sum[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${sum[p]>0?'+':''}${sum[p]}</p><div class="flex flex-col text-[8px] opacity-30 mt-1"><span>胡:${st.w[p]} / 摸:${st.m[p]} / 槍:${st.q[p]}</span></div></div>`).join('');
             document.getElementById('hands-list').innerHTML = state.roundHands.length==0 ? `<p class="py-6 opacity-20 italic text-center text-[#222222]">尚無雲端紀錄...</p>` : state.roundHands.map(h => {
                 let det = h.losId=='all' ? `<p class="text-[9px] opacity-50 italic text-[#222222]">(${state.selectedPlayerIds.filter(i=>i!=h.winId).map(i=>getPlayerName(i)+":"+h.imp[i]).join(' / ')})</p>` : "";
-                return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center"><div class="text-left text-[#222222]"><div class="flex items-center gap-2 text-center font-bold"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊:${getPlayerName(h.dealerId)}(${h.n})</span><span class="font-bold text-[#FF6D1F]">${getPlayerName(h.winId)}</span><span class="text-xs">${h.losId=='all'?'自摸':'胡'+getPlayerName(h.losId)} ${h.tai}台</span></div>${det}</div><div class="font-mono font-black ${h.imp[h.winId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.imp[h.winId]>0?'+':''}${h.imp[h.winId]}</div></div>`;
+                return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center"><div class="text-left text-[#222222]"><div class="flex items-center gap-2 text-center font-bold"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊:${getPlayerName(h.dealerId)}(${h.n})</span><span class="font-bold text-[#FF6D1F]">${getPlayerName(h.winId)}</span><span class="text-xs text-[#222222] font-bold">${h.losId=='all'?'自摸':'胡'+getPlayerName(h.losId)} ${h.tai}台</span></div>${det}</div><div class="flex items-center gap-3 font-mono font-black ${h.imp[h.winId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.imp[h.winId]>0?'+':''}${h.imp[h.winId]}<button onclick="deleteHand('${h.id}')" class="text-slate-200 hover:text-rose-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
             }).join('');
 
             if(state.history.length > 0) {
-                document.getElementById('history-list').innerHTML = state.history.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden font-bold"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center"><span class="text-[10px] opacity-40">第 ${r.roundNumber} 將 • ${r.date}</span><span class="text-[10px] text-[#FF6D1F]">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center">${r.players.map(p => `<div><p class="text-[9px] opacity-40 font-bold">${getPlayerName(p)}</p><p class="text-xs ${r.scores[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[p]}</p></div>`).join('')}</div></div>`).join('');
+                document.getElementById('history-list').innerHTML = state.history.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden text-[#222222] font-bold"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center text-[#222222]"><span class="text-[10px] opacity-40">第 ${r.roundNumber} 將 • ${r.date}</span><span class="text-[10px] text-[#FF6D1F] font-black">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center">${r.players.map(p => `<div><p class="text-[9px] opacity-40 font-bold text-[#222222]">${getPlayerName(p)}</p><p class="text-xs ${r.scores[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[p]}</p></div>`).join('')}</div></div>`).join('');
                 document.getElementById('settlement-container').classList.remove('hidden');
             }
 
@@ -459,15 +465,19 @@
             const today = state.history.filter(r => r.date === state.sessionDate);
             const net = {1:0,2:0,3:0,4:0,5:0}; let dS = today.reduce((a, b) => a + (b.dong || 0), 0);
             today.forEach(r => Object.keys(r.scores).forEach(p => net[p] += r.scores[p])); net[2] += dS;
-            document.getElementById('settle-date-label').textContent = `${state.sessionDate} 當日統計`;
-            document.getElementById('settle-balances-list').innerHTML = FIXED_PLAYERS.map(p => `<div class="text-center font-bold"><p class="text-[9px] font-bold opacity-40">${p.name}</p><p class="text-xs ${net[p.id]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${net[p.id]}</p></div>`).join('');
+            
+            const sdl = document.getElementById('settle-date-label'); if(sdl) sdl.textContent = `${state.sessionDate} 當日統計`;
+            const sbl = document.getElementById('settle-balances-list');
+            if(sbl) sbl.innerHTML = FIXED_PLAYERS.map(p => `<div class="text-center font-bold text-[#222222]"><p class="text-[9px] opacity-40">${p.name}</p><p class="text-xs ${net[p.id]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${net[p.id]}</p></div>`).join('');
+            
             const deb = [], cre = []; Object.keys(net).forEach(p => { if(net[p]<0) deb.push({n:getPlayerName(p),a:Math.abs(net[p])}); else if(net[p]>0) cre.push({n:getPlayerName(p),a:net[p]}); });
             const ins = []; let di=0, ci=0;
             while(di < deb.length && ci < cre.length) {
-                let s = Math.min(deb[di].a, cre[ci].a); ins.push(`<div class="flex justify-between bg-[#FAF3E1] p-3 rounded-lg border border-[#F5E7C6] text-xs font-bold"><span>${deb[di].n} 👉 <span class="text-[#FF6D1F]">${cre[ci].n}</span></span><span>$${s}</span></div>`);
+                let s = Math.min(deb[di].a, cre[ci].a); ins.push(`<div class="flex justify-between bg-[#FAF3E1] p-3 rounded-lg border border-[#F5E7C6] text-xs font-bold text-[#222222]"><span>${deb[di].n} 👉 <span class="text-[#FF6D1F]">${cre[ci].n}</span></span><span>$${s}</span></div>`);
                 deb[di].a -= s; cre[ci].a -= s; if(deb[di].a===0) di++; if(cre[ci].a===0) ci++;
             }
-            document.getElementById('settle-instructions').innerHTML = ins.length ? ins.join('') : '<p class="text-center text-xs opacity-20 italic">帳目平衡</p>';
+            const si = document.getElementById('settle-instructions');
+            if(si) si.innerHTML = ins.length ? ins.join('') : '<p class="text-center text-xs opacity-20 italic">帳目平衡</p>';
         };
 
         window.exportToCsv = () => {
@@ -479,9 +489,9 @@
         window.resetData = async () => {
             if(!confirm('這會清空雲端所有對局數據，確定？')) return;
             await setDoc(globalRef, { sessionDate: state.sessionDate, selectedPlayerIds:[1,2,3,4], consecutiveWins:{1:0,2:0,3:0,4:0,5:0}, rounds:0, totalDong:0, currentDealerId:null, eyeWatchers:[] });
-            const hs = await getDocs(handsColl); hs.forEach(d => deleteDoc(d.ref));
-            const hi = await getDocs(historyColl); hi.forEach(d => deleteDoc(d.ref));
-            const re = await getDocs(redoColl); re.forEach(d => deleteDoc(d.ref));
+            const handsSnap = await getDocs(handsColl); handsSnap.forEach(d => deleteDoc(d.ref));
+            const hiSnap = await getDocs(histColl); hiSnap.forEach(d => deleteDoc(d.ref));
+            const redoSnap = await getDocs(redoColl); redoSnap.forEach(d => deleteDoc(d.ref));
             location.reload();
         };
 
