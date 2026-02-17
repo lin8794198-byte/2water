@@ -102,10 +102,10 @@
                     <option value="100" class="text-black">100 / 20</option>
                 </select>
                 <button onclick="exportToCsv()" class="bg-[#FF6D1F] hover:opacity-90 px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-bold text-xs shadow-sm text-white h-[38px]">
-                    <i data-lucide="download" class="w-4 h-4"></i> 匯出 CSV
+                    <i data-lucide="download" class="w-4 h-4 text-white"></i> 匯出 CSV
                 </button>
                 <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all text-white h-[38px] flex items-center justify-center">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-white"></i>
                 </button>
             </div>
         </div>
@@ -117,11 +117,11 @@
                 <input type="date" id="session-date" onchange="updateState({sessionDate: this.value})" class="w-full font-bold text-[#222222] outline-none bg-transparent text-center text-sm">
             </div>
             <div class="bg-white p-3 rounded-xl border-2 border-[#F5E7C6] font-mono card-shadow text-[#222222]">
-                <label class="stat-label font-black text-slate-400 uppercase block mb-1 font-bold">累積將數</label>
-                <p id="total-rounds" class="text-xl font-black">0</p>
+                <label class="stat-label font-black text-slate-400 uppercase block mb-1 font-bold text-slate-400">當日累積將數</label>
+                <p id="total-rounds" class="text-xl font-black text-[#222222]">0</p>
             </div>
             <div class="bg-white p-3 rounded-xl border-2 border-[#F5E7C6] font-mono card-shadow text-[#222222]">
-                <label class="stat-label font-black text-slate-400 uppercase block mb-1 text-slate-400 font-bold">總東錢 (小為)</label>
+                <label class="stat-label font-black text-slate-400 uppercase block mb-1 text-slate-400 font-bold">當日總東錢 (小為)</label>
                 <p id="total-dong" class="text-xl font-black text-[#FF6D1F] leading-none">$0</p>
             </div>
         </div>
@@ -131,8 +131,8 @@
                 <!-- 1. Players Selection -->
                 <div class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] card-shadow text-[#222222]">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-sm font-black uppercase flex items-center gap-2 font-bold"><i data-lucide="users" class="w-4 h-4 text-[#FF6D1F]"></i> 1. 上場玩家</h2>
-                        <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic">雲端同步中</span>
+                        <h2 class="text-sm font-black uppercase flex items-center gap-2 font-bold text-[#222222]"><i data-lucide="users" class="w-4 h-4 text-[#FF6D1F]"></i> 1. 上場玩家</h2>
+                        <span id="player-status-msg" class="text-[10px] font-bold text-[#FF6D1F] hidden italic text-[#FF6D1F]">雲端同步中</span>
                     </div>
                     <div id="player-selection-grid" class="grid grid-cols-5 gap-2 text-center text-white"></div>
                 </div>
@@ -142,12 +142,11 @@
                     <h2 class="text-sm font-black text-[#222222] uppercase mb-4 flex items-center gap-2 font-bold"><i data-lucide="plus-circle" class="w-4 h-4 text-[#FF6D1F]"></i> 2. 紀錄胡牌</h2>
                     
                     <div class="space-y-6">
-                        <!-- 莊家 -->
                         <div class="p-4 bg-[#FAF3E1] rounded-xl border border-[#F5E7C6] shadow-inner text-center text-[#222222]">
                             <label class="text-[11px] font-black text-[#222222]/60 block mb-3 uppercase tracking-widest italic font-bold">👑 本局莊家 (東南西北)</label>
                             <div id="dealer-selection-container" class="grid grid-cols-4 gap-2 mb-4"></div>
                             <div id="dealer-consecutive-container" class="hidden space-y-4 transition-all">
-                                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-[#F5E7C6] shadow-sm">
+                                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-[#F5E7C6] shadow-sm text-[#222222]">
                                     <span class="font-bold text-[#222222] text-xs">莊家連莊數：</span>
                                     <input type="number" id="consecutive-input" value="0" min="0" max="20" onchange="updateConsecutiveWins(this.value)" class="w-16 bg-slate-50 border-none rounded text-lg font-black text-center py-1 outline-none focus:ring-2 focus:ring-[#FF6D1F] font-mono text-[#FF6D1F]">
                                 </div>
@@ -158,21 +157,18 @@
                             </div>
                         </div>
 
-                        <!-- 胡牌 -->
                         <div class="space-y-2 text-center text-[#222222]">
                             <label class="text-xs font-black text-[#FF6D1F] block uppercase tracking-widest font-bold">胡牌</label>
                             <div id="winner-buttons-grid" class="grid grid-cols-4 gap-2"></div>
                         </div>
 
-                        <!-- 放槍 -->
                         <div class="space-y-2 text-center text-[#222222]">
                             <label class="text-xs font-black text-[#222222]/60 block uppercase tracking-widest font-bold">放槍</label>
-                            <div id="loser-buttons-grid" class="grid grid-cols-5 gap-1.5"></div>
+                            <div id="loser-buttons-grid" class="grid grid-cols-5 gap-1.5 text-[#222222]"></div>
                         </div>
 
-                        <!-- 台數輸入 -->
                         <div class="mt-4 flex items-end gap-3 text-center text-[#222222]">
-                            <div class="flex-1 space-y-1 text-center">
+                            <div class="flex-1 space-y-1 text-center text-[#222222]">
                                 <label class="text-[10px] font-black text-slate-500 block text-center italic font-bold">請輸入總台數 (含莊連莊台)</label>
                                 <input type="number" id="tai-input" value="0" min="0" oninput="this.value = Math.abs(this.value)" class="w-full bg-slate-50 border border-[#F5E7C6] rounded-xl p-4 font-mono font-black tai-input-large text-center outline-none focus:ring-2 focus:ring-[#FF6D1F] shadow-inner text-[#222222]">
                             </div>
@@ -189,27 +185,27 @@
                 <!-- 3. Current Progress -->
                 <div class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] card-shadow text-[#222222]">
                     <div class="flex justify-between items-center mb-4 text-[#222222]">
-                        <h2 class="text-sm font-black uppercase flex items-center gap-2 font-bold"><i data-lucide="bar-chart-2" class="w-4 h-4 text-[#FF6D1F]"></i> 3. 即時計分</h2>
-                        <div class="flex items-center gap-1">
-                            <button onclick="undoAction()" id="undo-btn" class="flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="undo-2" class="w-5 h-5"></i></button>
-                            <button onclick="redoAction()" id="redo-btn" class="flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="redo-2" class="w-5 h-5"></i></button>
+                        <h2 class="text-sm font-black uppercase flex items-center gap-2 font-bold font-bold text-[#222222]"><i data-lucide="bar-chart-2" class="w-4 h-4 text-[#FF6D1F]"></i> 3. 即時計分</h2>
+                        <div class="flex items-center gap-1 text-[#222222]">
+                            <button onclick="undoAction()" id="undo-btn" title="上一步" class="flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="undo-2" class="w-5 h-5"></i></button>
+                            <button onclick="redoAction()" id="redo-btn" title="下一步" class="redo-btn flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="redo-2" class="w-5 h-5"></i></button>
                         </div>
                     </div>
                     <div id="current-summary-grid" class="grid grid-cols-4 gap-2 mb-6 text-center text-[#222222]"></div>
                     <div id="hands-list" class="space-y-2 max-h-[500px] overflow-y-auto mb-6 pr-1 custom-scrollbar text-[#222222]"></div>
-                    <div class="pt-6 border-t border-[#F5E7C6] space-y-4 text-center">
-                        <div class="flex items-center justify-between bg-[#F5E7C6] p-4 rounded-xl border border-[#FAF3E1] text-[#222222] font-bold"><span class="text-sm flex items-center gap-2"><i data-lucide="coins" class="w-5 h-5 text-[#FF6D1F]"></i>本將東錢累計</span><div class="font-black text-2xl font-mono text-[#222222]" id="round-dong-display">$0</div></div>
-                        <button onclick="finalizeRound()" class="w-full bg-[#222222] hover:bg-black text-white py-4 rounded-xl font-black shadow-lg active:scale-95 transition-all border-b-4 border-black font-bold text-white">結束本將</button>
+                    <div class="pt-6 border-t border-[#F5E7C6] space-y-4 text-center text-[#222222]">
+                        <div class="flex items-center justify-between bg-[#F5E7C6] p-4 rounded-xl border border-[#FAF3E1] text-[#222222] font-bold text-[#222222]"><span class="text-sm flex items-center gap-2"><i data-lucide="coins" class="w-5 h-5 text-[#FF6D1F]"></i>本將東錢累計</span><div class="font-black text-2xl font-mono text-[#222222]" id="round-dong-display">$0</div></div>
+                        <button onclick="finalizeRound()" class="w-full bg-[#222222] hover:bg-black text-white py-4 rounded-xl font-black shadow-lg active:scale-95 transition-all border-b-4 border-black font-bold text-white text-white">結束本將</button>
                     </div>
                 </div>
             </div>
 
             <!-- History Panel (當日紀錄) -->
             <div class="lg:col-span-5 space-y-4 text-left text-[#222222]">
-                <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2 font-bold"><i data-lucide="calendar-check" class="w-4 h-4 text-[#FF6D1F]"></i> 當日紀錄</h2>
+                <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2 font-bold font-bold text-[#222222]"><i data-lucide="calendar-check" class="w-4 h-4 text-[#FF6D1F]"></i> 當日紀錄</h2>
                 <div id="history-list" class="space-y-4 max-h-[1400px] overflow-y-auto pr-1 pb-4 custom-scrollbar text-[#222222]"></div>
                 <div id="settlement-container" class="space-y-4 hidden text-[#222222]">
-                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95 font-bold text-white"><i data-lucide="wallet" class="w-5 h-5 text-white"></i> 總計</button>
+                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95 font-bold text-white text-white text-white"><i data-lucide="wallet" class="w-5 h-5 text-white"></i> 總計</button>
                     <div id="settlement-result" class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] shadow-lg space-y-4 transition-all">
                         <div class="flex items-center justify-between border-b border-[#FAF3E1] pb-2 font-bold text-[#222222]"><span class="text-xs font-black text-[#FF6D1F]">建議匯款方案</span><span id="settle-date-label" class="text-[10px] font-bold text-slate-400"></span></div>
                         <div id="settle-balances-list" class="grid grid-cols-5 gap-1 border-b border-[#FAF3E1] pb-3 text-center text-[#222222]"></div>
@@ -288,8 +284,14 @@
                     setDoc(globalRef, { sessionDate: state.sessionDate, selectedPlayerIds: state.selectedPlayerIds, consecutiveWins: state.consecutiveWins, rounds: 0, totalDong: 0, currentDealerId: null, eyeWatchers: [], baseMoney: 50 });
                 }
             });
-            onSnapshot(handsColl, (snap) => { state.roundHands = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.ts - a.ts); renderAll(); });
-            onSnapshot(histColl, (snap) => { state.history = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.ts - a.ts); renderAll(); });
+            onSnapshot(handsColl, (snap) => { 
+                state.roundHands = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.ts - a.ts); 
+                renderAll(); 
+            });
+            onSnapshot(histColl, (snap) => { 
+                state.history = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.ts - a.ts); 
+                renderAll(); 
+            });
             onSnapshot(redoColl, (snap) => { if(document.getElementById('redo-btn')) document.getElementById('redo-btn').disabled = snap.empty; });
         }
 
@@ -362,7 +364,7 @@
                 state.selectedPlayerIds.forEach(pid => { if (pid !== winId && pid !== parseInt(losVal) && state.eyeWatchers.includes(pid)) { imp[pid] -= TAI_MONEY; imp[winId] += TAI_MONEY; } });
             }
 
-            await addDoc(handsColl, { winId, losId: losVal, tai: taiIn, dealerId, n: curN, eyes: state.eyeWatchers, imp, dong: isSelf ? DONG_FEE : 0, ts: Date.now(), dice: state.isDiceReturn, leo: state.isLeopard });
+            await addDoc(handsColl, { winId, losId: losVal, tai: taiIn, dealerId, n: curN, eyes: state.eyeWatchers, imp, dong: isSelf ? DONG_FEE : 0, ts: Date.now(), dice: state.isDiceReturn, leo: state.isLeopard, date: state.sessionDate });
             (await getDocs(redoColl)).forEach(d => deleteDoc(d.ref));
             
             let nextW = {...state.consecutiveWins}, nextD = dealerId;
@@ -400,7 +402,7 @@
 
         window.finalizeRound = async () => {
             if (state.roundHands.length === 0 || !auth.currentUser) return;
-            if (!confirm("確定結算本將？")) return;
+            if (!confirm("確定結算本將？資料將轉入紀錄並清空桌面。")) return;
             const sc = {1:0,2:0,3:0,4:0,5:0}, st = { wins:{1:0,2:0,3:0,4:0,5:0}, selfDraws:{1:0,2:0,3:0,4:0,5:0}, losses:{1:0,2:0,3:0,4:0,5:0} };
             let dTot = 0;
             state.roundHands.forEach(h => {
@@ -408,21 +410,25 @@
                 dTot += (h.dong || 0);
                 if (h.losId === 'all') st.selfDraws[h.winId]++; else { st.wins[h.winId]++; st.losses[h.losId]++; }
             });
-            await addDoc(histColl, { date: state.sessionDate, roundNumber: state.rounds + 1, players: state.selectedPlayerIds, scores: sc, stats: st, dong: dTot, ts: Date.now() });
+            await addDoc(histColl, { date: state.sessionDate, roundNumber: state.history.filter(r => r.date === state.sessionDate).length + 1, players: state.selectedPlayerIds, scores: sc, stats: st, dong: dTot, ts: Date.now() });
             const snaps = await getDocs(handsColl);
             const batch = writeBatch(db);
             snaps.forEach(d => batch.delete(d.ref));
             await batch.commit();
-            updateState({ rounds: state.rounds + 1, totalDong: state.totalDong + dTot });
-        };
+            // 不再更新全域 state.rounds，改由渲染時計算當日紀錄數量
+        }
 
         function renderAll() {
+            const currentDayHistory = state.history.filter(r => r.date === state.sessionDate);
+            const currentDayDong = currentDayHistory.reduce((a, b) => a + (b.dong || 0), 0);
+            
+            document.getElementById('total-rounds').textContent = currentDayHistory.length;
+            document.getElementById('total-dong').textContent = `$${currentDayDong}`;
+
             const sum = {1:0,2:0,3:0,4:0,5:0}, st = {w:{1:0,2:0,3:0,4:0,5:0},m:{1:0,2:0,3:0,4:0,5:0},q:{1:0,2:0,3:0,4:0,5:0}};
             let rdD = 0;
             state.roundHands.forEach(h => { Object.keys(h.imp).forEach(p => sum[p] = (sum[p] || 0) + h.imp[p]); rdD += (h.dong || 0); if (h.losId === 'all') st.m[h.winId]++; else { st.w[h.winId]++; st.q[h.losId]++; } });
             
-            document.getElementById('total-rounds').textContent = state.rounds;
-            document.getElementById('total-dong').textContent = `$${state.totalDong}`;
             document.getElementById('round-dong-display').textContent = `$${rdD}`;
             document.getElementById('undo-btn').disabled = state.roundHands.length === 0;
             
@@ -452,25 +458,25 @@
             
             document.getElementById('hands-list').innerHTML = state.roundHands.length==0 ? `<p class="py-6 opacity-20 italic text-center text-[#222222]">尚無雲端紀錄...</p>` : state.roundHands.map(h => {
                 const others = state.selectedPlayerIds.filter(pid => pid !== h.winId);
-                const detailStr = others.map(pid => `${getPlayerName(pid)}：${h.imp[pid]}`).join(' / ') + (h.losId === 'all' ? ` / 東：${h.dong}` : '');
-                let detailDisplay = `<p class="text-[9px] opacity-50 italic text-[#222222] font-bold">(${detailStr})</p>`;
-                return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center text-[#222222]"><div class="text-left text-[#222222]"><div class="flex items-center gap-2 text-center font-bold font-black text-[#222222]"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊：${getPlayerName(h.dealerId)}(${h.n})</span><span class="font-bold text-[#FF6D1F]">${getPlayerName(h.winId)}</span><span class="text-xs font-bold text-[#222222]">${h.losId=='all'?'自摸':'胡'+getPlayerName(h.losId)} ${h.tai}台</span></div>${detailDisplay}</div><div class="flex items-center gap-3 font-mono font-black ${h.imp[h.winId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.imp[h.winId]>0?'+':''}${h.imp[h.winId]}<button onclick="deleteHand('${h.id}')" class="text-slate-200 hover:text-rose-500 transition-colors p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+                const detailStr = others.map(pid => `${getPlayerName(pid)}：${Math.abs(h.imp[pid])}`).join(' / ') + (h.losId === 'all' ? ` / 東：-${h.dong}` : '');
+                return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center text-[#222222]"><div class="text-left text-[#222222]"><div class="flex items-center gap-2 text-center font-bold font-black text-[#222222]"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊：${getPlayerName(h.dealerId)}(${h.n})</span><span class="font-bold text-[#FF6D1F]">${getPlayerName(h.winId)}</span><span class="text-xs font-bold text-[#222222] font-bold">${h.losId=='all'?'自摸':'胡'+getPlayerName(h.losId)} ${h.tai}台</span></div><p class="text-[9px] opacity-50 italic text-[#222222] font-bold">(${detailStr})</p></div><div class="flex items-center gap-3 font-mono font-black ${h.imp[h.winId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.imp[h.winId]>0?'+':''}${h.imp[h.winId]}<button onclick="deleteHand('${h.id}')" class="text-slate-200 hover:text-rose-500 transition-colors p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
             }).join('');
 
-            const filteredHistory = state.history.filter(r => r.date === state.sessionDate);
             const hlist = document.getElementById('history-list');
             if(hlist) {
-                if(filteredHistory.length==0) hlist.innerHTML = `<div class="text-center py-10 opacity-20 italic text-sm text-[#222222] font-bold">尚未有本日紀錄</div>`;
-                else hlist.innerHTML = filteredHistory.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden font-bold text-left text-[#222222] text-[#222222]"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center text-[#222222]"><span class="text-[10px] opacity-40 font-bold">第 ${r.roundNumber} 將 • ${r.date}</span><span class="text-[10px] text-[#FF6D1F] font-black">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center font-bold">${r.players.map(p => `<div><p class="text-[9px] opacity-40 font-bold">${getPlayerName(p)}</p><p class="text-xs ${r.scores[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[p]}</p><div class="flex flex-col text-[7px] opacity-20 mt-1"><span>胡：${r.stats.wins[p]}</span><span>摸：${r.stats.selfDraws[p]}</span><span>槍：${r.stats.losses[p]}</span></div></div>`).join('')}</div></div>`).join('');
-                const scCont = document.getElementById('settlement-container'); if(scCont && filteredHistory.length > 0) scCont.classList.remove('hidden'); else if(scCont) scCont.classList.add('hidden');
+                if(currentDayHistory.length==0) hlist.innerHTML = `<div class="text-center py-10 opacity-20 italic text-sm text-[#222222] font-bold">尚未有本日紀錄</div>`;
+                else hlist.innerHTML = currentDayHistory.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden font-bold text-left text-[#222222]"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center text-[#222222]"><span class="text-[10px] opacity-40 font-bold">第 ${r.roundNumber} 將 • ${r.date}</span><span class="text-[10px] text-[#FF6D1F] font-black">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center font-bold text-[#222222]">${r.players.map(p => `<div><p class="text-[9px] opacity-40 font-bold">${getPlayerName(p)}</p><p class="text-xs ${r.scores[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[p]}</p><div class="flex flex-col text-[7px] opacity-20 mt-1"><span>胡：${r.stats.wins[p]}</span><span>摸：${r.stats.selfDraws[p]}</span><span>槍：${r.stats.losses[p]}</span></div></div>`).join('')}</div></div>`).join('');
+                const scCont = document.getElementById('settlement-container'); if(scCont && currentDayHistory.length > 0) scCont.classList.remove('hidden'); else if(scCont) scCont.classList.add('hidden');
             }
+
+            document.getElementById('btn-dice').className = state.isDiceReturn ? "p-3.5 rounded-xl border-2 bg-[#FF6D1F] text-white shadow-md font-bold" : "p-3.5 rounded-xl border-2 bg-white text-slate-100 font-bold";
+            document.getElementById('btn-leopard').className = state.isLeopard ? "p-3.5 rounded-xl border-2 bg-[#222222] text-white shadow-md font-bold" : "p-3.5 rounded-xl border-2 bg-white text-slate-100 font-bold";
             if(typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         window.calculateSettlement = () => {
             const today = state.history.filter(r => r.date === state.sessionDate);
-            const net = {1:0,2:0,3:0,4:0,5:0};
-            const netStats = { wins:{1:0,2:0,3:0,4:0,5:0}, selfDraws:{1:0,2:0,3:0,4:0,5:0}, losses:{1:0,2:0,3:0,4:0,5:0} };
+            const net = {1:0,2:0,3:0,4:0,5:0}, netStats = { wins:{1:0,2:0,3:0,4:0,5:0}, selfDraws:{1:0,2:0,3:0,4:0,5:0}, losses:{1:0,2:0,3:0,4:0,5:0} };
             let dS = today.reduce((a, b) => a + (b.dong || 0), 0);
             today.forEach(r => {
                 Object.keys(r.scores).forEach(p => net[p] = (net[p] || 0) + r.scores[p]);
@@ -500,12 +506,17 @@
         };
 
         window.resetData = async () => {
-            if(!confirm('這會清空雲端所有對局數據，確定？')) return;
+            if(!confirm(`這會清空【${state.sessionDate}】當天的所有數據（包含當局紀錄與歷史存檔），確定？`)) return;
             const batch = writeBatch(db);
+            // 1. 重置全域
             batch.set(globalRef, { sessionDate: state.sessionDate, selectedPlayerIds:[1,2,3,4], consecutiveWins:{1:0,2:0,3:0,4:0,5:0}, rounds:0, totalDong:0, currentDealerId:null, eyeWatchers:[], baseMoney: 50 });
-            const handsSnap = await getDocs(handsColl); handsSnap.forEach(d => batch.delete(d.ref));
-            const hiSnap = await getDocs(histColl); hiSnap.forEach(d => deleteDoc(d.ref));
-            const reSnap = await getDocs(redoColl); reSnap.forEach(d => batch.delete(d.ref));
+            // 2. 獲取並過濾當日紀錄進行刪除
+            const hSnap = await getDocs(handsColl);
+            hSnap.forEach(d => { if(d.data().date === state.sessionDate) batch.delete(d.ref); });
+            const hiSnap = await getDocs(histColl);
+            hiSnap.forEach(d => { if(d.data().date === state.sessionDate) batch.delete(d.ref); });
+            const reSnap = await getDocs(redoColl);
+            reSnap.forEach(d => { if(d.data().date === state.sessionDate) batch.delete(d.ref); });
             await batch.commit();
             location.reload();
         };
