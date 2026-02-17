@@ -96,7 +96,7 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2 text-[#222222]">
-                <select id="base-money-select" onchange="updateState({baseMoney: parseInt(this.value)})" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl text-white font-bold text-xs border border-white/10 outline-none cursor-pointer h-[38px]">
+                <select id="base-money-select" onchange="updateState({baseMoney: parseInt(this.value)})" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl text-white font-bold text-xs border border-white/10 outline-none cursor-pointer h-[38px] disabled:opacity-50 disabled:cursor-not-allowed">
                     <option value="50" class="text-black">50 / 20</option>
                     <option value="100" class="text-black">100 / 20</option>
                 </select>
@@ -203,7 +203,7 @@
                 </div>
             </div>
 
-            <!-- History Panel (當日紀錄) -->
+            <!-- History Panel -->
             <div class="lg:col-span-5 space-y-4 text-left text-[#222222]">
                 <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2 font-bold font-bold text-[#222222]"><i data-lucide="calendar-check" class="w-4 h-4 text-[#FF6D1F]"></i> 當日紀錄</h2>
                 <div id="history-list" class="space-y-4 max-h-[1400px] overflow-y-auto pr-1 pb-4 custom-scrollbar text-[#222222]"></div>
@@ -278,7 +278,12 @@
                     const data = snap.data();
                     Object.assign(state, data);
                     if(document.getElementById('session-date')) document.getElementById('session-date').value = state.sessionDate;
-                    if(document.getElementById('base-money-select')) document.getElementById('base-money-select').value = state.baseMoney || 50;
+                    
+                    // 同步底錢 UI，但會在 renderAll 進行綁定邏輯檢查
+                    if(document.getElementById('base-money-select')) {
+                        document.getElementById('base-money-select').value = state.baseMoney || 50;
+                    }
+                    
                     if(document.getElementById('consecutive-input') && state.currentDealerId) {
                         document.getElementById('consecutive-input').value = state.consecutiveWins[state.currentDealerId] || 0;
                     }
@@ -317,15 +322,12 @@
             const n = state.consecutiveWins[state.currentDealerId] || 0;
             const ds = (2 * n + 1);
 
-            // 1. 莊家自摸: (2n+1) + 1 (莊家台 + 自摸台)
             if (state.tempWinnerId === state.currentDealerId && state.tempLoserId === 'all') {
                 input.value = ds + 1;
             } 
-            // 2. 莊家胡 或 旁家胡莊家: (2n+1) (基本台數)
             else if (state.tempWinnerId === state.currentDealerId || (state.tempLoserId !== 'all' && parseInt(state.tempLoserId) === state.currentDealerId)) {
                 input.value = ds;
             } 
-            // 3. 旁家自摸: 1 (自摸台)
             else if (state.tempLoserId === 'all') {
                 input.value = 1; 
             } 
@@ -365,15 +367,12 @@
                 let winG = 0;
                 state.selectedPlayerIds.forEach(pid => {
                     if (pid === winId) return;
-                    // 邏輯: 旁家自摸，莊家要多付 2n+1
                     let finalTai = taiIn + diceTai;
                     if (winId !== dealerId && pid === dealerId) finalTai += ds;
-                    
                     let money = baseMoney + (finalTai * TAI_MONEY);
-                    if (state.isWinnerEye) money += 20; // 贏家眼牌其餘各付1台
-                    if (state.eyeWatchers.includes(pid)) money += 20; // 旁家眼牌自付1台
+                    if (winEye) money += 20; 
+                    if (state.eyeWatchers.includes(pid)) money += 20; 
                     if (state.isLeopard) money *= 2;
-                    
                     imp[pid] = -money; winG += money;
                 });
                 imp[winId] = winG - DONG_FEE;
@@ -432,7 +431,8 @@
                 dTot += (h.dong || 0);
                 if (h.losId === 'all') st.selfDraws[h.winId]++; else { st.wins[h.winId]++; st.losses[h.losId]++; }
             });
-            await addDoc(histColl, { date: state.sessionDate, roundNumber: state.history.filter(r => r.date === state.sessionDate).length + 1, players: state.selectedPlayerIds, scores: sc, stats: st, dong: dTot, ts: Date.now() });
+            // 儲存時包含當前的 baseMoney 設定
+            await addDoc(histColl, { date: state.sessionDate, roundNumber: state.history.filter(r => r.date === state.sessionDate).length + 1, players: state.selectedPlayerIds, scores: sc, stats: st, dong: dTot, ts: Date.now(), baseMoney: state.baseMoney });
             const snaps = await getDocs(handsColl);
             const batch = writeBatch(db);
             snaps.forEach(d => batch.delete(d.ref));
@@ -445,6 +445,28 @@
             
             document.getElementById('total-rounds').textContent = currentDayHistory.length;
             document.getElementById('total-dong').textContent = `$${currentDayDong}`;
+
+            // --- 綁定日期與規則邏輯 ---
+            const baseSelect = document.getElementById('base-money-select');
+            if (baseSelect) {
+                // 如果當天已經有紀錄，強制鎖定底錢設定
+                if (currentDayHistory.length > 0) {
+                    const lockedBase = currentDayHistory[0].baseMoney || 50;
+                    baseSelect.value = lockedBase;
+                    baseSelect.disabled = true;
+                    // 如果雲端 state.baseMoney 與歷史紀錄不符，則更新雲端以修正後續 addHand 的計算
+                    if (state.baseMoney !== lockedBase) {
+                        updateState({baseMoney: lockedBase});
+                    }
+                } 
+                // 如果正在遊戲中 (roundHands 有東西)，也禁用選單避免中途改規則
+                else if (state.roundHands.length > 0) {
+                    baseSelect.disabled = true;
+                }
+                else {
+                    baseSelect.disabled = false;
+                }
+            }
 
             const sum = {1:0,2:0,3:0,4:0,5:0}, st = {w:{1:0,2:0,3:0,4:0,5:0},m:{1:0,2:0,3:0,4:0,5:0},q:{1:0,2:0,3:0,4:0,5:0}};
             let rdD = 0;
@@ -466,11 +488,11 @@
             if(state.currentDealerId) document.getElementById('dealer-consecutive-container').classList.remove('hidden');
 
             const eye = document.getElementById('eye-watcher-grid');
-            if (eye) eye.innerHTML = state.selectedPlayerIds.map(p => { const act = state.eyeWatchers.includes(p); return `<button onclick="toggleEyeWatcher(${p})" class="py-2.5 rounded-lg text-xs font-bold border ${act?'bg-[#FF6D1F] border-transparent text-white shadow-sm':'bg-white border-[#F5E7C6] text-[#222222]/40'}"><i data-lucide="eye" class="w-3 h-3 inline mr-1"></i>${getPlayerName(p)}</button>`; }).join('');
+            if (eye) eye.innerHTML = state.selectedPlayerIds.map(p => { const act = state.eyeWatchers.includes(p); return `<button onclick="toggleEyeWatcher(${p})" class="py-2.5 rounded-lg text-xs font-bold border ${act?'bg-[#FF6D1F] text-white shadow-sm':'bg-white border-[#F5E7C6] text-[#222222]/40'}"><i data-lucide="eye" class="w-3 h-3 inline mr-1"></i>${getPlayerName(p)}</button>`; }).join('');
 
             const psSelected = FIXED_PLAYERS.filter(p=>state.selectedPlayerIds.includes(p.id));
             document.getElementById('winner-buttons-grid').innerHTML = psSelected.map(p => `<button onclick="pickWinner(${p.id})" class="select-btn py-4 rounded-xl font-black text-sm ${state.tempWinnerId === p.id ? 'winner-active text-white' : 'bg-white text-slate-400'} font-bold">${p.name}</button>`).join('');
-            document.getElementById('loser-buttons-grid').innerHTML = `<button onclick="pickLoser('all')" class="select-btn py-4 rounded-xl font-black text-sm ${state.tempLoserId === 'all' ? 'loser-active text-white' : 'bg-white text-slate-400'} font-bold">🌟自摸</button>` + psSelected.map(p => {
+            document.getElementById('loser-buttons-grid').innerHTML = `<button onclick="pickLoser('all')" class="select-btn py-4 rounded-xl font-black text-sm ${state.tempLoserId === 'all' ? 'loser-active text-white' : 'bg-white text-slate-400'} font-bold text-black text-white">🌟自摸</button>` + psSelected.map(p => {
                 const isWin = state.tempWinnerId === p.id;
                 return `<button onclick="${isWin ? '' : `pickLoser(${p.id})`}" class="select-btn py-4 rounded-xl font-black text-sm ${state.tempLoserId === p.id ? 'loser-active text-white' : 'bg-white text-slate-400'} ${isWin ? 'opacity-10 cursor-not-allowed' : ''} font-bold text-black">${p.name}</button>`;
             }).join('');
@@ -480,13 +502,13 @@
             document.getElementById('hands-list').innerHTML = state.roundHands.length==0 ? `<p class="py-6 opacity-20 italic text-center text-[#222222]">尚無雲端紀錄...</p>` : state.roundHands.map(h => {
                 const others = state.selectedPlayerIds.filter(pid => pid !== h.winId);
                 const detailStr = others.map(pid => `${getPlayerName(pid)}：${Math.abs(h.imp[pid])}`).join(' / ') + (h.losId === 'all' ? ` / 東：-${h.dong}` : '');
-                return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center text-[#222222]"><div class="text-left text-[#222222]"><div class="flex items-center gap-2 text-center font-bold font-black text-[#222222]"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊：${getPlayerName(h.dealerId)}(${h.n})</span><span class="font-bold text-[#FF6D1F]">${getPlayerName(h.winId)}</span><span class="text-xs font-bold text-[#222222] font-bold">${h.losId=='all'?'自摸':'胡'+getPlayerName(h.losId)} ${h.tai}台</span></div><p class="text-[9px] opacity-50 italic text-[#222222] font-bold">(${detailStr})</p></div><div class="flex items-center gap-3 font-mono font-black ${h.imp[h.winId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.imp[h.winId]>0?'+':''}${h.imp[h.winId]}<button onclick="deleteHand('${h.id}')" class="text-slate-200 hover:text-rose-500 transition-colors p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+                return `<div class="p-4 bg-white rounded-xl border border-[#F5E7C6] flex justify-between items-center text-[#222222]"><div class="text-left text-[#222222]"><div class="flex items-center gap-2 text-center font-bold font-black text-[#222222] font-black"><span class="bg-[#222222] text-white px-1.5 py-0.5 rounded text-[8px]">莊：${getPlayerName(h.dealerId)}(${h.n})</span><span class="font-bold text-[#FF6D1F]">${getPlayerName(h.winId)}</span><span class="text-xs font-bold text-[#222222] font-bold">${h.losId=='all'?'自摸':'胡'+getPlayerName(h.losId)} ${h.tai}台</span></div><p class="text-[9px] opacity-50 italic text-[#222222] font-bold">(${detailStr})</p></div><div class="flex items-center gap-3 font-mono font-black ${h.imp[h.winId]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${h.imp[h.winId]>0?'+':''}${h.imp[h.winId]}<button onclick="deleteHand('${h.id}')" class="text-slate-200 hover:text-rose-500 transition-colors p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
             }).join('');
 
             const hlist = document.getElementById('history-list');
             if(hlist) {
                 if(currentDayHistory.length==0) hlist.innerHTML = `<div class="text-center py-10 opacity-20 italic text-sm text-[#222222] font-bold">尚未有本日紀錄</div>`;
-                else hlist.innerHTML = currentDayHistory.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden font-bold text-left text-[#222222]"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center text-[#222222]"><span class="text-[10px] opacity-40 font-bold">第 ${r.roundNumber} 將 • ${r.date}</span><span class="text-[10px] text-[#FF6D1F] font-black">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center font-bold text-[#222222]">${r.players.map(p => `<div><p class="text-[9px] opacity-40 font-bold">${getPlayerName(p)}</p><p class="text-xs ${r.scores[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[p]}</p><div class="flex flex-col text-[7px] opacity-20 mt-1"><span>胡：${r.stats.wins[p]}</span><span>摸：${r.stats.selfDraws[p]}</span><span>槍：${r.stats.losses[p]}</span></div></div>`).join('')}</div></div>`).join('');
+                else hlist.innerHTML = currentDayHistory.map(r => `<div class="bg-white rounded-xl shadow border-2 border-[#F5E7C6] overflow-hidden font-bold text-left text-[#222222]"><div class="bg-[#FAF3E1] px-4 py-2 border-b border-[#F5E7C6] flex justify-between items-center text-[#222222]"><span class="text-[10px] opacity-40 font-bold">第 ${r.roundNumber} 將 • ${r.date} • 底/台：${r.baseMoney || 50}/20</span><span class="text-[10px] text-[#FF6D1F] font-black">$${r.dong}</span></div><div class="p-3 grid grid-cols-4 gap-1 text-center font-bold text-[#222222]">${r.players.map(p => `<div><p class="text-[9px] opacity-40 font-bold">${getPlayerName(p)}</p><p class="text-xs ${r.scores[p]>=0?'text-[#FF6D1F]':'text-[#222222]'}">${r.scores[p]}</p><div class="flex flex-col text-[7px] opacity-20 mt-1"><span>胡：${r.stats.wins[p]}</span><span>摸：${r.stats.selfDraws[p]}</span><span>槍：${r.stats.losses[p]}</span></div></div>`).join('')}</div></div>`).join('');
                 const scCont = document.getElementById('settlement-container'); if(scCont && currentDayHistory.length > 0) scCont.classList.remove('hidden'); else if(scCont) scCont.classList.add('hidden');
             }
 
