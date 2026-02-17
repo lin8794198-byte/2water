@@ -61,14 +61,14 @@
         .select-btn.winner-active {
             background-color: #FF6D1F;
             border-color: #FF6D1F;
-            color: white;
+            color: white !important;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(255, 109, 31, 0.3);
         }
         .select-btn.loser-active {
             background-color: #222222;
             border-color: #222222;
-            color: white;
+            color: white !important;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(34, 34, 34, 0.3);
         }
@@ -87,7 +87,7 @@
         <!-- Header -->
         <div class="bg-[#222222] p-5 rounded-2xl text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 text-center">
             <div class="flex items-center justify-center space-x-3 text-white">
-                <div class="bg-white/10 p-2 rounded-xl border border-white/10">
+                <div class="bg-white/10 p-2 rounded-xl border border-white/10 text-white">
                     <i data-lucide="cloud-lightning" class="w-6 h-6 text-[#FF6D1F]"></i>
                 </div>
                 <div class="text-left text-white">
@@ -96,7 +96,6 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2 text-[#222222]">
-                <!-- 規則切換 -->
                 <select id="base-money-select" onchange="updateState({baseMoney: parseInt(this.value)})" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl text-white font-bold text-xs border border-white/10 outline-none cursor-pointer h-[38px]">
                     <option value="50" class="text-black">50 / 20</option>
                     <option value="100" class="text-black">100 / 20</option>
@@ -105,7 +104,7 @@
                     <i data-lucide="download" class="w-4 h-4 text-white"></i> 匯出 CSV
                 </button>
                 <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all text-white h-[38px] flex items-center justify-center">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-white"></i>
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
@@ -128,7 +127,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left text-[#222222]">
             <div class="lg:col-span-7 space-y-6">
-                <!-- 1. Players Selection -->
+                <!-- 1. Player Selection -->
                 <div class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] card-shadow text-[#222222]">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-sm font-black uppercase flex items-center gap-2 font-bold text-[#222222]"><i data-lucide="users" class="w-4 h-4 text-[#FF6D1F]"></i> 1. 上場玩家</h2>
@@ -142,6 +141,7 @@
                     <h2 class="text-sm font-black text-[#222222] uppercase mb-4 flex items-center gap-2 font-bold"><i data-lucide="plus-circle" class="w-4 h-4 text-[#FF6D1F]"></i> 2. 紀錄胡牌</h2>
                     
                     <div class="space-y-6">
+                        <!-- 莊家 -->
                         <div class="p-4 bg-[#FAF3E1] rounded-xl border border-[#F5E7C6] shadow-inner text-center text-[#222222]">
                             <label class="text-[11px] font-black text-[#222222]/60 block mb-3 uppercase tracking-widest italic font-bold">👑 本局莊家 (東南西北)</label>
                             <div id="dealer-selection-container" class="grid grid-cols-4 gap-2 mb-4"></div>
@@ -157,16 +157,19 @@
                             </div>
                         </div>
 
+                        <!-- 胡牌 -->
                         <div class="space-y-2 text-center text-[#222222]">
                             <label class="text-xs font-black text-[#FF6D1F] block uppercase tracking-widest font-bold">胡牌</label>
                             <div id="winner-buttons-grid" class="grid grid-cols-4 gap-2"></div>
                         </div>
 
+                        <!-- 放槍 -->
                         <div class="space-y-2 text-center text-[#222222]">
                             <label class="text-xs font-black text-[#222222]/60 block uppercase tracking-widest font-bold">放槍</label>
                             <div id="loser-buttons-grid" class="grid grid-cols-5 gap-1.5 text-[#222222]"></div>
                         </div>
 
+                        <!-- 台數輸入 -->
                         <div class="mt-4 flex items-end gap-3 text-center text-[#222222]">
                             <div class="flex-1 space-y-1 text-center text-[#222222]">
                                 <label class="text-[10px] font-black text-slate-500 block text-center italic font-bold">請輸入總台數 (含莊連莊台)</label>
@@ -187,8 +190,8 @@
                     <div class="flex justify-between items-center mb-4 text-[#222222]">
                         <h2 class="text-sm font-black uppercase flex items-center gap-2 font-bold font-bold text-[#222222]"><i data-lucide="bar-chart-2" class="w-4 h-4 text-[#FF6D1F]"></i> 3. 即時計分</h2>
                         <div class="flex items-center gap-1 text-[#222222]">
-                            <button onclick="undoAction()" id="undo-btn" title="上一步" class="flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="undo-2" class="w-5 h-5"></i></button>
-                            <button onclick="redoAction()" id="redo-btn" title="下一步" class="redo-btn flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="redo-2" class="w-5 h-5"></i></button>
+                            <button onclick="undoAction()" id="undo-btn" title="上一步" class="flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="undo-2" class="w-5 h-5 text-[#222222]"></i></button>
+                            <button onclick="redoAction()" id="redo-btn" title="下一步" class="redo-btn flex items-center justify-center w-10 h-10 bg-[#FAF3E1] border border-[#F5E7C6] rounded-xl text-[#222222]/40 hover:text-[#FF6D1F] transition-all disabled:opacity-10"><i data-lucide="redo-2" class="w-5 h-5 text-[#222222]"></i></button>
                         </div>
                     </div>
                     <div id="current-summary-grid" class="grid grid-cols-4 gap-2 mb-6 text-center text-[#222222]"></div>
@@ -207,7 +210,7 @@
                 <div id="settlement-container" class="space-y-4 hidden text-[#222222]">
                     <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95 font-bold text-white text-white text-white"><i data-lucide="wallet" class="w-5 h-5 text-white"></i> 總計</button>
                     <div id="settlement-result" class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] shadow-lg space-y-4 transition-all">
-                        <div class="flex items-center justify-between border-b border-[#FAF3E1] pb-2 font-bold text-[#222222]"><span class="text-xs font-black text-[#FF6D1F]">建議匯款方案</span><span id="settle-date-label" class="text-[10px] font-bold text-slate-400"></span></div>
+                        <div class="flex items-center justify-between border-b border-[#FAF3E1] pb-2 font-bold text-[#222222]"><span class="text-xs font-black text-[#FF6D1F]">建議匯款方案</span><span id="settle-date-label" class="text-[10px] font-bold text-slate-400 text-slate-400"></span></div>
                         <div id="settle-balances-list" class="grid grid-cols-5 gap-1 border-b border-[#FAF3E1] pb-3 text-center text-[#222222]"></div>
                         <div id="settle-instructions" class="space-y-2 text-[#222222]"></div>
                     </div>
@@ -311,11 +314,24 @@
         function autoFillTai() {
             const input = document.getElementById('tai-input');
             if(!input || !state.currentDealerId) return;
-            if(state.tempWinnerId === state.currentDealerId || (state.tempLoserId !== 'all' && parseInt(state.tempLoserId) === state.currentDealerId)) {
-                const n = state.consecutiveWins[state.currentDealerId] || 0;
-                input.value = (2 * n + 1);
-            } else if (state.tempLoserId === 'all') { input.value = 1; }
-            else { input.value = 0; }
+            const n = state.consecutiveWins[state.currentDealerId] || 0;
+            const ds = (2 * n + 1);
+
+            // 1. 莊家自摸: (2n+1) + 1 (莊家台 + 自摸台)
+            if (state.tempWinnerId === state.currentDealerId && state.tempLoserId === 'all') {
+                input.value = ds + 1;
+            } 
+            // 2. 莊家胡 或 旁家胡莊家: (2n+1) (基本台數)
+            else if (state.tempWinnerId === state.currentDealerId || (state.tempLoserId !== 'all' && parseInt(state.tempLoserId) === state.currentDealerId)) {
+                input.value = ds;
+            } 
+            // 3. 旁家自摸: 1 (自摸台)
+            else if (state.tempLoserId === 'all') {
+                input.value = 1; 
+            } 
+            else {
+                input.value = 0; 
+            }
         }
 
         window.togglePlayer = (id) => { if (state.roundHands.length > 0) return; let ids = state.selectedPlayerIds.includes(id) ? state.selectedPlayerIds.filter(p => p !== id) : [...state.selectedPlayerIds, id].slice(0,4); updateState({ selectedPlayerIds: ids }); };
@@ -323,8 +339,9 @@
             const n = state.consecutiveWins[id] || 0;
             updateState({ currentDealerId: id, eyeWatchers: [] }); 
             if(document.getElementById('consecutive-input')) document.getElementById('consecutive-input').value = n;
+            autoFillTai();
         };
-        window.updateConsecutiveWins = (v) => { if (!state.currentDealerId) return; let wins = {...state.consecutiveWins}; wins[state.currentDealerId] = parseInt(v) || 0; updateState({ consecutiveWins: wins }); };
+        window.updateConsecutiveWins = (v) => { if (!state.currentDealerId) return; let wins = {...state.consecutiveWins}; wins[state.currentDealerId] = parseInt(v) || 0; updateState({ consecutiveWins: wins }); autoFillTai(); };
         window.toggleEyeWatcher = (id) => { let eyes = state.eyeWatchers.includes(id) ? state.eyeWatchers.filter(e => e !== id) : [...state.eyeWatchers, id]; updateState({ eyeWatchers: eyes }); };
         window.toggleMod = (t) => { if(t === 'dice') { state.isDiceReturn = !state.isDiceReturn; state.isLeopard = false; } else { state.isLeopard = !state.isLeopard; state.isDiceReturn = false; } renderAll(); };
 
@@ -348,10 +365,15 @@
                 let winG = 0;
                 state.selectedPlayerIds.forEach(pid => {
                     if (pid === winId) return;
+                    // 邏輯: 旁家自摸，莊家要多付 2n+1
                     let finalTai = taiIn + diceTai;
                     if (winId !== dealerId && pid === dealerId) finalTai += ds;
+                    
                     let money = baseMoney + (finalTai * TAI_MONEY);
+                    if (state.isWinnerEye) money += 20; // 贏家眼牌其餘各付1台
+                    if (state.eyeWatchers.includes(pid)) money += 20; // 旁家眼牌自付1台
                     if (state.isLeopard) money *= 2;
+                    
                     imp[pid] = -money; winG += money;
                 });
                 imp[winId] = winG - DONG_FEE;
@@ -415,7 +437,6 @@
             const batch = writeBatch(db);
             snaps.forEach(d => batch.delete(d.ref));
             await batch.commit();
-            // 不再更新全域 state.rounds，改由渲染時計算當日紀錄數量
         }
 
         function renderAll() {
@@ -434,7 +455,7 @@
             
             document.getElementById('player-selection-grid').innerHTML = FIXED_PLAYERS.map(p => {
                 const sel = state.selectedPlayerIds.includes(p.id);
-                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold border-2 transition-all ${sel?'bg-[#FF6D1F] border-transparent text-white shadow-md font-bold':'bg-white border-[#F5E7C6] text-slate-300'}"><span>${p.name}</span></button>`;
+                return `<button onclick="togglePlayer(${p.id})" class="py-4 rounded-xl font-bold border-2 transition-all ${sel?'bg-[#FF6D1F] border-transparent text-white shadow-md font-bold text-white':'bg-white border-[#F5E7C6] text-slate-300'}"><span>${p.name}</span></button>`;
             }).join('');
 
             const sts = ["東","南","西","北"];
@@ -508,9 +529,7 @@
         window.resetData = async () => {
             if(!confirm(`這會清空【${state.sessionDate}】當天的所有數據（包含當局紀錄與歷史存檔），確定？`)) return;
             const batch = writeBatch(db);
-            // 1. 重置全域
             batch.set(globalRef, { sessionDate: state.sessionDate, selectedPlayerIds:[1,2,3,4], consecutiveWins:{1:0,2:0,3:0,4:0,5:0}, rounds:0, totalDong:0, currentDealerId:null, eyeWatchers:[], baseMoney: 50 });
-            // 2. 獲取並過濾當日紀錄進行刪除
             const hSnap = await getDocs(handsColl);
             hSnap.forEach(d => { if(d.data().date === state.sessionDate) batch.delete(d.ref); });
             const hiSnap = await getDocs(histColl);
