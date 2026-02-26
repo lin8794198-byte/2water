@@ -176,13 +176,13 @@
                                 <label class="text-[10px] font-black text-slate-500 block text-center italic font-bold">請輸入總台數 (含莊連莊台)</label>
                                 <input type="number" id="tai-input" value="0" min="0" oninput="this.value = Math.abs(this.value)" class="w-full bg-slate-50 border border-[#F5E7C6] rounded-xl p-4 font-mono font-black tai-input-large text-center outline-none focus:ring-2 focus:ring-[#FF6D1F] shadow-inner text-[#222222]">
                             </div>
-                            <div class="flex gap-1.5 pb-1 text-white">
+                            <div class="flex gap-1.5 pb-1 text-white text-white">
                                 <button id="btn-dice" onclick="toggleMod('dice')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-300 shadow-sm" title="骰規 +2台"><i data-lucide="dices" class="w-6 h-6"></i></button>
                                 <button id="btn-leopard" onclick="toggleMod('leopard')" class="p-3.5 rounded-xl border transition-all border-[#F5E7C6] bg-white text-slate-300 shadow-sm" title="豹子 x2"><i data-lucide="zap" class="w-6 h-6"></i></button>
                             </div>
                         </div>
 
-                        <button onclick="addHand()" class="w-full mt-2 bg-[#FF6D1F] hover:opacity-90 text-white py-4 rounded-xl font-black shadow-xl active:scale-95 transition-all border-b-4 border-[#222222]/20 font-bold text-white text-white">記錄這筆數據</button>
+                        <button onclick="addHand()" class="w-full mt-2 bg-[#FF6D1F] hover:opacity-90 text-white py-4 rounded-xl font-black shadow-xl active:scale-95 transition-all border-b-4 border-[#222222]/20 font-bold text-white text-white text-white">記錄這筆數據</button>
                     </div>
                 </div>
 
@@ -199,7 +199,7 @@
                     <div id="hands-list" class="space-y-2 max-h-[500px] overflow-y-auto mb-6 pr-1 custom-scrollbar text-[#222222]"></div>
                     <div class="pt-6 border-t border-[#F5E7C6] space-y-4 text-center text-[#222222]">
                         <div class="flex items-center justify-between bg-[#F5E7C6] p-4 rounded-xl border border-[#FAF3E1] text-[#222222] font-bold text-[#222222]"><span class="text-sm flex items-center gap-2"><i data-lucide="coins" class="w-5 h-5 text-[#FF6D1F]"></i>本將東錢累計</span><div class="font-black text-2xl font-mono text-[#222222]" id="round-dong-display">$0</div></div>
-                        <button onclick="finalizeRound()" class="w-full bg-[#222222] hover:bg-black text-white py-4 rounded-xl font-black shadow-lg active:scale-95 transition-all border-b-4 border-black font-bold text-white text-white">結束本將</button>
+                        <button onclick="finalizeRound()" class="w-full bg-[#222222] hover:bg-black text-white py-4 rounded-xl font-black shadow-lg active:scale-95 transition-all border-b-4 border-black font-bold text-white text-white text-white">結束本將</button>
                     </div>
                 </div>
             </div>
@@ -209,7 +209,7 @@
                 <h2 class="text-sm font-black text-[#222222] uppercase flex items-center gap-2 px-2 font-bold font-bold text-[#222222]"><i data-lucide="calendar-check" class="w-4 h-4 text-[#FF6D1F]"></i> 當日紀錄</h2>
                 <div id="history-list" class="space-y-4 max-h-[1400px] overflow-y-auto pr-1 pb-4 custom-scrollbar text-[#222222]"></div>
                 <div id="settlement-container" class="space-y-4 hidden text-[#222222]">
-                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95 font-bold text-white text-white text-white"><i data-lucide="wallet" class="w-5 h-5 text-white"></i> 總計</button>
+                    <button onclick="calculateSettlement()" class="w-full bg-[#FF6D1F] hover:opacity-95 text-white py-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-xl border-b-4 border-black/10 transition-all active:scale-95 font-bold text-white text-white text-white text-white text-white"><i data-lucide="wallet" class="w-5 h-5 text-white"></i> 總計</button>
                     <div id="settlement-result" class="bg-white p-5 rounded-2xl border-2 border-[#F5E7C6] shadow-lg space-y-4 transition-all">
                         <div class="flex items-center justify-between border-b border-[#FAF3E1] pb-2 font-bold text-[#222222]"><span class="text-xs font-black text-[#FF6D1F]">建議匯款方案</span><span id="settle-date-label" class="text-[10px] font-bold text-slate-400 text-slate-400"></span></div>
                         <div id="settle-balances-list" class="grid grid-cols-3 sm:grid-cols-6 gap-1 border-b border-[#FAF3E1] pb-3 text-center text-[#222222]"></div>
@@ -247,10 +247,10 @@
         const histColl = collection(db, ...rootPath, 'history');
         const redoColl = collection(db, ...rootPath, 'redo');
 
-        // 新增玩家：宥榆
+        // 修改：Karl 改名為 KarL
         const FIXED_PLAYERS = [
             {id:1,name:'阿茂'},{id:2,name:'小為'},{id:3,name:'阿仁'},
-            {id:4,name:'榮緯'},{id:5,name:'Karl'},{id:6,name:'宥榆'}
+            {id:4,name:'榮緯'},{id:5,name:'KarL'},{id:6,name:'宥榆'}
         ];
         const TAI_MONEY = 20, DONG_FEE = 20;
 
